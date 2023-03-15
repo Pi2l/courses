@@ -18,7 +18,7 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false, length = 13)
+    @Column(nullable = false, length = 20)
     private String phoneNumber;
 
     @Column(nullable = false, unique = true)
@@ -27,11 +27,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-    public User() {
-    }
 
     public Long getId() {
         return id;
