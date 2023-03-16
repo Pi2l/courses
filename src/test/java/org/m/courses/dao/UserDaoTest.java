@@ -4,56 +4,34 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.m.courses.builder.UserBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
-import org.m.courses.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
 public class UserDaoTest {
 
-    private List<User> users;
-
     @Autowired
     private UserDao userDao;
 
     @Autowired
-    private UserRepository repository;
+    private UserBuilder userBuilder;
 
     @BeforeEach
     public void setUp() {
-        initUsers();
-        repository.saveAll(users);
-    }
-
-    private void initUsers() {
-        User u1 = new User();
-        User u2 = new User();
-        users = List.of( u1, u2 );
-
-        u1.setFirstName("Anton");
-        u1.setLastName("Resheto");
-        u1.setPhoneNumber("1");
-        u1.setLogin("reshetoanton");
-        u1.setPassword("password1");
-        u1.setRole(Role.USER);
-
-        u2.setFirstName("Petro");
-        u2.setLastName("Kamin");
-        u2.setPhoneNumber("2");
-        u2.setLogin("kaminpetro");
-        u2.setPassword("password2");
-        u2.setRole(Role.USER);
     }
 
     @AfterEach
     public void tearDown() {
-        repository.deleteAll();
     }
 
     @Test
@@ -72,45 +50,112 @@ public class UserDaoTest {
     }
 
     @Test
-    void getUserTest() {
-        Optional<User> userOrNull = userDao.get(users.get(0).getId());
+    void saveUserWithNullFieldsTest() {
+        User user = new User();
 
-        Assertions.assertTrue(userOrNull.isPresent());
-        User user = userOrNull.get();
-        Assertions.assertEquals(user.getId(), users.get(0).getId());
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+    }
+
+    @Test
+    void saveUserWithPhoneNumberGreaterThanAllowedTest() {
+        User user = userBuilder.buildNew();
+        user.setPhoneNumber("123456789012345678901234");
+
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+    }
+
+    @Test
+    void saveUserWithNonUniqueLoginTest() {
+        User userFromDB = userBuilder.toDB();
+        User userWithSameLogin = userBuilder.buildNew();
+        userWithSameLogin.setLogin( userFromDB.getLogin() );
+
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(userWithSameLogin) );
+    }
+
+    @Test
+    void getUserTest() {
+        User user = userBuilder.toDB();
+        Optional<User> userFromDB = userDao.get(user.getId());
+
+        assertEquals(user, userFromDB.get());
     }
 
     @Test
     void getAllUsersTest() {
+        userBuilder.toDB();
+        userBuilder.toDB();
+
         List<User> users = userDao.getAll();
 
-        Assertions.assertEquals(users.size(), this.users.size());
+        assertEquals(2, users.size());
     }
 
     @Test
     void updateUserTest() {
-        String firstName = "Taras";
-        String lastName = "Lampa";
+        User user = userBuilder.toDB();
+        User updatedUser = userBuilder.build();
+        updatedUser.setId(user.getId());
 
-        User user = users.get(0);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
+        User userFromDB = userDao.update(updatedUser);
 
-        User userUpdated = userDao.update(user);
+        assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
+        assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
+        assertEquals(updatedUser.getPhoneNumber(), userFromDB.getPhoneNumber());
+        assertEquals(updatedUser.getLogin(), userFromDB.getLogin());
+        assertEquals(updatedUser.getPassword(), userFromDB.getPassword());
+        assertEquals(updatedUser.getRole(), userFromDB.getRole());
+    }
 
-        Assertions.assertEquals(userUpdated.getFirstName(), firstName);
-        Assertions.assertEquals(userUpdated.getLastName(), lastName);
+    @Test
+    void updateNotExistingUserTest() {
+        User user = userBuilder.build();
+
+        User updatedUser = userDao.update(user);
+        assertEquals(updatedUser, user);
+        assertTrue( userDao.get( user.getId() ).isEmpty() );
+    }
+
+    @Test
+    void updateUserWithNullFieldsTest() {
+        User user = userBuilder.toDB();
+        userDao.create(user);
+
+        user.setFirstName(null);
+        user.setLastName(null);
+        user.setPhoneNumber(null);
+        user.setLogin(null);
+        user.setPassword(null);
+        user.setRole(null);
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(user) );
+    }
+
+    @Test
+    void updateUserWithPhoneNumberGreaterThanAllowedTest() {
+        User user = userBuilder.toDB();
+        user.setPhoneNumber("123456789012345678901234");
+
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(user) );
+    }
+
+    @Test
+    void updateUserWithNonUniqueLoginTest() {
+        User userFromDB = userBuilder.toDB();
+        User userWithSameLogin = userBuilder.toDB();
+        userWithSameLogin.setLogin( userFromDB.getLogin() );
+
+        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithSameLogin) );
     }
 
     @Test
     void deleteUserTest() {
-        User userToDelete = users.get(0);
+        User userToDelete = userBuilder.toDB();
 
         userDao.delete(userToDelete.getId());
 
-        Optional<User> nullUser = userDao.get(userToDelete.getId());
+        Optional<User> userFromDB = userDao.get(userToDelete.getId());
 
-        Assertions.assertTrue(nullUser.isEmpty());
+        Assertions.assertTrue(userFromDB.isEmpty());
     }
 }
 
