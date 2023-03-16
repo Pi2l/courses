@@ -36,13 +36,7 @@ public class UserDaoTest {
 
     @Test
     void saveUserTest() {
-        User user = new User();
-        user.setFirstName("Mykhailo");
-        user.setLastName("Ostapenko");
-        user.setPhoneNumber("88317232");
-        user.setRole(Role.USER);
-        user.setLogin("login1");
-        user.setPassword("password");
+        User user = userBuilder.buildNew();
 
         userDao.create(user);
 
