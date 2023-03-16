@@ -4,6 +4,7 @@ import org.m.courses.model.User;
 import org.m.courses.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -17,7 +18,7 @@ public class UserDao implements Dao<User> {
     }
 
     @Override
-    public Iterable<User> getAll() {
+    public List<User> getAll() {
         return repository.findAll();
     }
 
@@ -27,17 +28,19 @@ public class UserDao implements Dao<User> {
     }
 
     @Override
-    public void create(User obj) {
+    public User create(User obj) {
         if (obj != null) {
-            repository.save(obj);
+            return repository.save(obj);
         }
+        return null;
     }
 
     @Override
-    public void update(User obj) {
+    public User update(User obj) {
         if (obj != null && get(obj.getId()).isPresent()) {
-            repository.save(obj);
+            return repository.save(obj);
         }
+        return obj;
     }
 
     @Override
