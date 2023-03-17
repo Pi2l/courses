@@ -1,18 +1,18 @@
 package org.m.courses.dao;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.builder.UserBuilder;
-import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import javax.persistence.Column;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,28 +26,38 @@ public class UserDaoTest {
     @Autowired
     private UserBuilder userBuilder;
 
-    @BeforeEach
-    public void setUp() {
-    }
-
-    @AfterEach
-    public void tearDown() {
-    }
-
     @Test
     void saveUserTest() {
         User user = userBuilder.buildNew();
 
         userDao.create(user);
 
-        Assertions.assertNotNull(userDao.get(user.getId()));
+        assertNotNull(userDao.get(user.getId()));
     }
 
     @Test
     void saveUserWithNullFieldsTest() {
         User user = new User();
 
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+        DataIntegrityViolationException exception =
+                assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+
+        String detailedCause = exception.getMessage();
+
+        var fieldsToCheck = Arrays.stream(User.class.getDeclaredFields())
+                .filter(field -> {
+                    Column columnAnnotation = field.getAnnotation(Column.class);
+                    if (columnAnnotation != null) {
+                        return !columnAnnotation.nullable();
+                    } else {
+                        return false;
+                    }
+                }).collect(Collectors.toList());
+
+        AtomicBoolean nullableFieldViolated = new AtomicBoolean(false);
+        fieldsToCheck.forEach(field ->
+                nullableFieldViolated.set(nullableFieldViolated.get() | detailedCause.contains(field.getName())));
+        assertTrue(nullableFieldViolated.get());
     }
 
     @Test
@@ -55,7 +65,12 @@ public class UserDaoTest {
         User user = userBuilder.buildNew();
         user.setPhoneNumber("123456789012345678901234");
 
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+        DataIntegrityViolationException exception =
+                assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
+
+        String detailedMessage = exception.getCause().getCause().getMessage();
+        assertTrue(detailedMessage.contains("Value too long for column"));
+        assertTrue(detailedMessage.contains( user.getPhoneNumber() ));
     }
 
     @Test
@@ -64,7 +79,12 @@ public class UserDaoTest {
         User userWithSameLogin = userBuilder.buildNew();
         userWithSameLogin.setLogin( userFromDB.getLogin() );
 
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(userWithSameLogin) );
+        DataIntegrityViolationException exception =
+                assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(userWithSameLogin) );
+
+        String detailedMessage = exception.getCause().getCause().getMessage();
+        assertTrue(detailedMessage.contains("Unique index or primary key violation"));
+        assertTrue(detailedMessage.contains( userWithSameLogin.getLogin() ));
     }
 
     @Test
@@ -91,7 +111,10 @@ public class UserDaoTest {
         User updatedUser = userBuilder.build();
         updatedUser.setId(user.getId());
 
-        User userFromDB = userDao.update(updatedUser);
+        Optional<User> userFromDBOrNull = userDao.update(updatedUser);
+        assertFalse(userFromDBOrNull.isEmpty());
+
+        User userFromDB = userFromDBOrNull.get();
 
         assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
         assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
@@ -105,23 +128,17 @@ public class UserDaoTest {
     void updateNotExistingUserTest() {
         User user = userBuilder.build();
 
-        User updatedUser = userDao.update(user);
-        assertEquals(updatedUser, user);
-        assertTrue( userDao.get( user.getId() ).isEmpty() );
+        Optional<User> updatedUser = userDao.update(user);
+        assertTrue(updatedUser.isEmpty());
     }
 
     @Test
     void updateUserWithNullFieldsTest() {
         User user = userBuilder.toDB();
-        userDao.create(user);
+        User userWithNullFields = new User();
+        userWithNullFields.setId( user.getId() );
 
-        user.setFirstName(null);
-        user.setLastName(null);
-        user.setPhoneNumber(null);
-        user.setLogin(null);
-        user.setPassword(null);
-        user.setRole(null);
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(user) );
+        assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithNullFields) );
     }
 
     @Test
@@ -129,7 +146,7 @@ public class UserDaoTest {
         User user = userBuilder.toDB();
         user.setPhoneNumber("123456789012345678901234");
 
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(user) );
+        assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(user) );
     }
 
     @Test
@@ -138,7 +155,7 @@ public class UserDaoTest {
         User userWithSameLogin = userBuilder.toDB();
         userWithSameLogin.setLogin( userFromDB.getLogin() );
 
-        Assertions.assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithSameLogin) );
+        assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithSameLogin) );
     }
 
     @Test
@@ -149,7 +166,7 @@ public class UserDaoTest {
 
         Optional<User> userFromDB = userDao.get(userToDelete.getId());
 
-        Assertions.assertTrue(userFromDB.isEmpty());
+        assertTrue(userFromDB.isEmpty());
     }
 }
 

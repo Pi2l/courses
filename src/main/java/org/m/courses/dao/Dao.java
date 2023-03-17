@@ -8,10 +8,9 @@ public interface Dao<T> {
     List<T> getAll();
 
     Optional<T> get(Long id);
+    Optional<T> create(T obj);
 
-    T create(T obj);
-
-    T update(T obj);
+    Optional<T> update(T obj);
 
     void delete(Long id);
 }

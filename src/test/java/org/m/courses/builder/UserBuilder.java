@@ -3,7 +3,6 @@ package org.m.courses.builder;
 import org.m.courses.dao.UserDao;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -12,16 +11,16 @@ import java.security.SecureRandom;
 @Component
 public class UserBuilder {
 
-    protected final UserDao userDao;
+    private UserDao userDao;
 
-    protected User user;
+    private User user;
 
     public static UserBuilder builder(UserDao userDao) {
         return new UserBuilder(userDao);
     }
 
     public UserBuilder(UserDao userDao) {
-        user = new User();
+        buildDefaultUser();
         this.userDao = userDao;
     }
 
@@ -37,21 +36,20 @@ public class UserBuilder {
     }
 
     public User toDB() {
-        return userDao.create( buildNew() );
+        return userDao.create( buildNew() ).get();
     }
 
     private UserBuilder buildDefaultUser() {
-        int randomValue = new SecureRandom().nextInt(100000);
+        long randomValue = Math.abs(new SecureRandom().nextLong()) % 10000;
+        this.user = new User();
 
-        setId((long) randomValue);
+        setId(randomValue);
         setFirstName("FirstName_" + randomValue);
         setLastName("LastName_" + randomValue);
         setPhoneNumber("PhoneNumber_" + randomValue);
         setLogin("Login_" + randomValue);
         setPassword("Password_" + randomValue);
-
-        Role[] roles = Role.values();
-        setRole( roles[Math.floorMod( randomValue, roles.length )] );
+        setRole( Role.USER );
         return this;
     }
 

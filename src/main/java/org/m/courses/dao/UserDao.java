@@ -28,19 +28,19 @@ public class UserDao implements Dao<User> {
     }
 
     @Override
-    public User create(User obj) {
-        if (obj != null) {
-            return repository.save(obj);
+    public Optional<User> create(User obj) {
+        if (obj != null && obj.getId() == null) {
+            return Optional.of(repository.save(obj));
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
-    public User update(User obj) {
+    public Optional<User> update(User obj) {
         if (obj != null && get(obj.getId()).isPresent()) {
-            return repository.save(obj);
+            return Optional.of(repository.save(obj));
         }
-        return obj;
+        return Optional.empty();
     }
 
     @Override
