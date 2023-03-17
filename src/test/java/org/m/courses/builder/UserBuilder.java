@@ -16,17 +16,17 @@ public class UserBuilder {
 
     private User user;
 
-    {
-        buildDefaultUser();
-    }
-
     public static UserBuilder builder() {
         return new UserBuilder();
     }
 
+    public UserBuilder() {
+        initDefaultUser();
+    }
+
     public User build() {
         User odlUser = user;
-        buildDefaultUser();
+        initDefaultUser();
         return odlUser;
     }
 
@@ -40,7 +40,7 @@ public class UserBuilder {
         return userDao.create( buildNew() ).get();
     }
 
-    private UserBuilder buildDefaultUser() {
+    private UserBuilder initDefaultUser() {
         long randomValue = Math.abs(new SecureRandom().nextLong()) % 10000;
         this.user = new User();
 

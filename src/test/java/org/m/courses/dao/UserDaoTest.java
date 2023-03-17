@@ -35,30 +35,30 @@ public class UserDaoTest {
     void saveUserWithNullFieldsTest() {
         User user = userBuilder.buildNew();
         user.setFirstName(null);
-        createUser(user, "firstName");
+        assertNotNullField(user, "firstName");
         
         user = userBuilder.buildNew();
         user.setLastName(null);
-        createUser(user, "lastName");
+        assertNotNullField(user, "lastName");
   
         user = userBuilder.buildNew();
         user.setPhoneNumber(null);
-        createUser(user, "phoneNumber");
+        assertNotNullField(user, "phoneNumber");
    
         user = userBuilder.buildNew();
         user.setLogin(null);
-        createUser(user, "login");
+        assertNotNullField(user, "login");
    
         user = userBuilder.buildNew();
         user.setPassword(null);
-        createUser(user, "password");
+        assertNotNullField(user, "password");
    
         user = userBuilder.buildNew();
         user.setRole(null);
-        createUser(user, "role");
+        assertNotNullField(user, "role");
     }
 
-    private void createUser(User user, String fieldName) {
+    private void assertNotNullField(User user, String fieldName) {
         DataIntegrityViolationException exception =
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
 
