@@ -3,6 +3,7 @@ package org.m.courses.builder;
 import org.m.courses.dao.UserDao;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -11,17 +12,16 @@ import java.security.SecureRandom;
 @Component
 public class UserBuilder {
 
-    private UserDao userDao;
+    @Autowired private UserDao userDao;
 
     private User user;
 
-    public static UserBuilder builder(UserDao userDao) {
-        return new UserBuilder(userDao);
+    {
+        buildDefaultUser();
     }
 
-    public UserBuilder(UserDao userDao) {
-        buildDefaultUser();
-        this.userDao = userDao;
+    public static UserBuilder builder() {
+        return new UserBuilder();
     }
 
     public User build() {
@@ -35,6 +35,7 @@ public class UserBuilder {
                 .build();
     }
 
+    // Spring based
     public User toDB() {
         return userDao.create( buildNew() ).get();
     }
