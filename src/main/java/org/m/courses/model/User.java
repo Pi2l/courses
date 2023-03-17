@@ -12,13 +12,13 @@ public class User {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "first_name")
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "last_name")
     private String lastName;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, name = "phone_number")
     private String phoneNumber;
 
     @Column(nullable = false, unique = true)

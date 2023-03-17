@@ -7,12 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import javax.persistence.Column;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,32 +28,44 @@ public class UserDaoTest {
 
         userDao.create(user);
 
-        assertNotNull(userDao.get(user.getId()));
+        assertTrue( userDao.get(user.getId()).isPresent() );
     }
 
     @Test
     void saveUserWithNullFieldsTest() {
-        User user = new User();
+        User user = userBuilder.buildNew();
+        user.setFirstName(null);
+        createUser(user, "firstName");
+        
+        user = userBuilder.buildNew();
+        user.setLastName(null);
+        createUser(user, "lastName");
+  
+        user = userBuilder.buildNew();
+        user.setPhoneNumber(null);
+        createUser(user, "phoneNumber");
+   
+        user = userBuilder.buildNew();
+        user.setLogin(null);
+        createUser(user, "login");
+   
+        user = userBuilder.buildNew();
+        user.setPassword(null);
+        createUser(user, "password");
+   
+        user = userBuilder.buildNew();
+        user.setRole(null);
+        createUser(user, "role");
+    }
 
+    private void createUser(User user, String fieldName) {
         DataIntegrityViolationException exception =
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
 
         String detailedCause = exception.getMessage();
 
-        var fieldsToCheck = Arrays.stream(User.class.getDeclaredFields())
-                .filter(field -> {
-                    Column columnAnnotation = field.getAnnotation(Column.class);
-                    if (columnAnnotation != null) {
-                        return !columnAnnotation.nullable();
-                    } else {
-                        return false;
-                    }
-                }).collect(Collectors.toList());
-
-        AtomicBoolean nullableFieldViolated = new AtomicBoolean(false);
-        fieldsToCheck.forEach(field ->
-                nullableFieldViolated.set(nullableFieldViolated.get() | detailedCause.contains(field.getName())));
-        assertTrue(nullableFieldViolated.get());
+        assertTrue(detailedCause.contains( fieldName ));
+        assertTrue(detailedCause.contains( "not-null property references a null or transient value" ));
     }
 
     @Test
@@ -69,8 +77,8 @@ public class UserDaoTest {
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(user) );
 
         String detailedMessage = exception.getCause().getCause().getMessage();
-        assertTrue(detailedMessage.contains("Value too long for column"));
-        assertTrue(detailedMessage.contains( user.getPhoneNumber() ));
+        assertTrue(detailedMessage.contains( "Value too long for column" ));
+        assertTrue(detailedMessage.contains( "phone_number" ));
     }
 
     @Test
@@ -83,8 +91,8 @@ public class UserDaoTest {
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.create(userWithSameLogin) );
 
         String detailedMessage = exception.getCause().getCause().getMessage();
-        assertTrue(detailedMessage.contains("Unique index or primary key violation"));
-        assertTrue(detailedMessage.contains( userWithSameLogin.getLogin() ));
+        assertTrue(detailedMessage.contains( "Unique index or primary key violation" ));
+        assertTrue(detailedMessage.contains( "login" ));
     }
 
     @Test
