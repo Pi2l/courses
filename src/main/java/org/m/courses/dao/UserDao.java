@@ -47,4 +47,8 @@ public class UserDao implements Dao<User> {
     public void delete(Long id) {
         repository.deleteById(id);
     }
+
+    public Optional<User> findByLogin(String login) {
+        return repository.findByLogin(login);
+    }
 }
