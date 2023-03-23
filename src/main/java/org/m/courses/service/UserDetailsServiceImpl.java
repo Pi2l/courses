@@ -2,10 +2,11 @@ package org.m.courses.service;
 
 import org.m.courses.dao.UserDao;
 import org.m.courses.model.User;
-import org.m.courses.model.UserForAuth;
+import org.m.courses.model.SpringUser;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -27,6 +28,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException(String.format("user with login: %s now found", (username)));
         }
 
-        return new UserForAuth( userOptional.get() );
+        return new SpringUser( userOptional.get() );
     }
 }

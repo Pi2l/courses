@@ -7,11 +7,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-public class UserForAuth implements UserDetails {
+public class SpringUser implements UserDetails {
 
     private User user;
 
-    public UserForAuth(User user) {
+    public SpringUser(User user) {
         this.user = user;
     }
 
@@ -48,5 +48,13 @@ public class UserForAuth implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

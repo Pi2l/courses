@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UserService implements IService<User> {
+public class UserService {
 
     private UserDao userDao;
 
@@ -15,27 +15,22 @@ public class UserService implements IService<User> {
         this.userDao = userDao;
     }
 
-    @Override
     public List<User> getAll() {
         return userDao.getAll();
     }
 
-    @Override
     public User get(Long id) {
         return userDao.get(id).orElse(null);
     }
 
-    @Override
     public User create(User instance) {
-        return userDao.create( instance ).orElse(null);
+        return userDao.create( instance );
     }
 
-    @Override
     public User update(User instance) {
-        return userDao.update( instance ).orElse(null);
+        return userDao.update( instance );
     }
 
-    @Override
     public void delete(Long id) {
         userDao.delete(id);
     }

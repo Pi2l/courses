@@ -1,7 +1,11 @@
 package org.m.courses.dao;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +25,16 @@ public class UserDaoTest {
 
     @Autowired
     private UserBuilder userBuilder;
+
+    @BeforeEach
+    void login() {
+        AuthManager.loginAs( UserBuilder.builder().setRole(Role.ADMIN).build() );
+    }
+
+    @AfterEach
+    void logout() {
+        AuthManager.logout();
+    }
 
     @Test
     void saveUserTest() {
@@ -119,10 +133,8 @@ public class UserDaoTest {
         User updatedUser = userBuilder.build();
         updatedUser.setId(user.getId());
 
-        Optional<User> userFromDBOrNull = userDao.update(updatedUser);
-        assertFalse(userFromDBOrNull.isEmpty());
-
-        User userFromDB = userFromDBOrNull.get();
+        User userFromDB = userDao.update(updatedUser);
+        assertNotNull(userFromDB);
 
         assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
         assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
@@ -136,8 +148,8 @@ public class UserDaoTest {
     void updateNotExistingUserTest() {
         User user = userBuilder.build();
 
-        Optional<User> updatedUser = userDao.update(user);
-        assertTrue(updatedUser.isEmpty());
+        User updatedUser = userDao.update(user);
+        assertNull(updatedUser);
     }
 
     @Test
