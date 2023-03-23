@@ -31,11 +31,6 @@ public class UserDaoTest {
         AuthManager.loginAs( UserBuilder.builder().setRole(Role.ADMIN).build() );
     }
 
-    @AfterEach
-    void logout() {
-        AuthManager.logout();
-    }
-
     @Test
     void saveUserTest() {
         User user = userBuilder.buildNew();

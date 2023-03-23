@@ -85,6 +85,11 @@ public class UserDao implements Dao<User> {
         if ( authorizationService.isAdmin() ) {
             return null;
         }
-        return buildEqualSpec("id", authorizationService.getCurrentUser().getId());
+
+        User currentUser = authorizationService.getCurrentUser();
+        if (currentUser == null) {
+            return buildEqualSpec("id", null);
+        }
+        return buildEqualSpec("id", currentUser.getId());
     }
 }

@@ -14,22 +14,13 @@ import java.util.List;
 public class AuthManager {
 
     public static User loginAs(User user) {
+        SecurityContextHolder.clearContext();
+
+        SpringUser springUser = new SpringUser( user );
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getLogin(), user.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())) );
+                springUser, springUser.getUser().getPassword(), List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())) );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return user;
-    }
-
-    public static void logout() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-    }
-
-    public static SpringUser getSpringUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return null;
-        }
-        return (SpringUser) authentication.getPrincipal();
     }
 }

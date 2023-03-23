@@ -47,9 +47,13 @@ public class UserAuthorizationService {
 
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new UserUnauthenticatedException();
+        }
 
-        if (authentication instanceof SpringUser) {
-            return ((SpringUser) authentication.getPrincipal()).getUser();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof SpringUser) {
+            return ((SpringUser) principal ).getUser();
         }
         return null;
     }
