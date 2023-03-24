@@ -45,7 +45,8 @@ public class UserDao extends AbstractDao<User> {
         return repository;
     }
 
-    private boolean canModify(Long id) {
-        return isAdmin() || authorizationService.getCurrentUser().getId().equals( id );
+    @Override
+    protected boolean canModify(Long id) {
+        return super.canModify(id) || authorizationService.getCurrentUser().getId().equals( id );
     }
 }

@@ -57,7 +57,7 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
     @Override
     public T update(T entity) {
 
-        if ( !isAdmin() ) {
+        if ( !canModify( entity.getId() ) ) {
             throw new AccessDeniedException();
         }
 
@@ -76,9 +76,13 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
 
     @Override
     public void delete(Long id) {
-        if ( !isAdmin() ) {
+        if ( !canModify(id) ) {
             throw new AccessDeniedException();
         }
         getRepository().deleteById(id);
+    }
+
+    protected boolean canModify(Long id) {
+        return isAdmin();
     }
 }
