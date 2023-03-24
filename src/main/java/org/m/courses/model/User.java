@@ -6,7 +6,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "user")
-public class User {
+public class User implements Identity<Long> {
 
     @Id
     @GeneratedValue

@@ -144,7 +144,7 @@ public class UserDaoTest {
     void updateNotExistingUserTest() {
         User user = userBuilder.build();
 
-        assertThrowsExactly(AccessDeniedException.class, () -> userDao.update(user) );
+        assertNull( userDao.update(user) );
     }
 
     @Test
@@ -179,7 +179,7 @@ public class UserDaoTest {
 
         userDao.delete(userToDelete.getId());
 
-        assertThrowsExactly(AccessDeniedException.class, () -> userDao.get(userToDelete.getId()) );
+        assertNull( userDao.get(userToDelete.getId()) );
 
     }
 }
