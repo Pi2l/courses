@@ -28,12 +28,13 @@ public class UserDao implements Dao<User> {
 
     @Override
     public List<User> getAll() {
-        return repository.findAll( readonlySpecification() );
+        return repository.findAll( buildReadOnlySpec() );
     }
 
     @Override
-    public Optional<User> get(Long id) {
-        return repository.findOne( buildEqualSpec( "id", id ).and( readonlySpecification() ) );
+    public User get(Long id) {
+        return repository.findOne( buildEqualSpec( "id", id ).and( buildReadOnlySpec() ) )
+                .orElseThrow(AccessDeniedException::new);
     }
 
     @Override
@@ -47,10 +48,10 @@ public class UserDao implements Dao<User> {
     @Override
     public User update(User user) {
         Optional<User> userFromDB = repository.findOne(
-                buildEqualSpec("id", user.getId()).and( writeSpecification() ));
+                buildEqualSpec("id", user.getId()).and( buildWriteSpec() ));
 
         if (userFromDB.isEmpty()) {
-            return null;
+            throw new AccessDeniedException();
         }
         return repository.save(user);
     }
@@ -58,10 +59,10 @@ public class UserDao implements Dao<User> {
     @Override
     public void delete(Long id) {
         Optional<User> userFromDB = repository.findOne(
-                buildEqualSpec("id", id).and( writeSpecification() ));
+                buildEqualSpec("id", id).and( buildWriteSpec() ));
 
         if (userFromDB.isEmpty()) {
-            return ;
+            throw new AccessDeniedException();
         }
         repository.deleteById(id);
     }
@@ -74,22 +75,18 @@ public class UserDao implements Dao<User> {
         return (root, cq, cb) -> cb.equal( root.get( fieldName ), value );
     }
 
-    private Specification<User> readonlySpecification() {
+    private Specification<User> buildReadOnlySpec() {
         if (authorizationService.isAdmin()) {
             return null;
         }
         return not(buildEqualSpec("role", Role.ADMIN));
     }
 
-    private Specification<User> writeSpecification() {
+    private Specification<User> buildWriteSpec() {
         if ( authorizationService.isAdmin() ) {
             return null;
         }
 
-        User currentUser = authorizationService.getCurrentUser();
-        if (currentUser == null) {
-            return buildEqualSpec("id", null);
-        }
-        return buildEqualSpec("id", currentUser.getId());
+        return buildEqualSpec("id", authorizationService.getCurrentUser().getId());
     }
 }

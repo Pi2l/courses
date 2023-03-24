@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class UserDaoTest {
 
     @BeforeEach
     void login() {
-        AuthManager.loginAs( UserBuilder.builder().setRole(Role.ADMIN).build() );
+        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
     }
 
     @Test
@@ -37,7 +38,7 @@ public class UserDaoTest {
 
         userDao.create(user);
 
-        assertTrue( userDao.get(user.getId()).isPresent() );
+        assertNotNull( userDao.get(user.getId()) );
     }
 
     @Test
@@ -107,9 +108,9 @@ public class UserDaoTest {
     @Test
     void getUserTest() {
         User user = userBuilder.toDB();
-        Optional<User> userFromDB = userDao.get(user.getId());
+        User userFromDB = userDao.get(user.getId());
 
-        assertEquals(user, userFromDB.get());
+        assertEquals(user, userFromDB);
     }
 
     @Test
@@ -143,8 +144,7 @@ public class UserDaoTest {
     void updateNotExistingUserTest() {
         User user = userBuilder.build();
 
-        User updatedUser = userDao.update(user);
-        assertNull(updatedUser);
+        assertThrowsExactly(AccessDeniedException.class, () -> userDao.update(user) );
     }
 
     @Test
@@ -179,9 +179,8 @@ public class UserDaoTest {
 
         userDao.delete(userToDelete.getId());
 
-        Optional<User> userFromDB = userDao.get(userToDelete.getId());
+        assertThrowsExactly(AccessDeniedException.class, () -> userDao.get(userToDelete.getId()) );
 
-        assertTrue(userFromDB.isEmpty());
     }
 }
 

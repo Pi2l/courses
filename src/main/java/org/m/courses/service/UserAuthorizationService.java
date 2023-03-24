@@ -18,22 +18,22 @@ import java.util.stream.Collectors;
 public class UserAuthorizationService {
 
     public boolean isAdmin() {
-        return getRoles().contains( Role.ADMIN.name() );
+        return getSpringRoles().contains( Role.ADMIN.name() );
     }
 
     public boolean isTeacher() {
-        return getRoles().contains( Role.TEACHER.name() );
+        return getSpringRoles().contains( Role.TEACHER.name() );
     }
 
     public boolean isUser() {
-        return getRoles().contains( Role.USER.name() );
+        return getSpringRoles().contains( Role.USER.name() );
     }
 
     public boolean isAuthenticated() {
         return SecurityContextHolder.getContext().getAuthentication() != null;
     }
 
-    private List<String> getRoles() {
+    private List<String> getSpringRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             throw new UserUnauthenticatedException();

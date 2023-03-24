@@ -7,7 +7,7 @@ public interface Dao<T> {
 
     List<T> getAll();
 
-    Optional<T> get(Long id);
+    T get(Long id);
     T create(T obj);
 
     T update(T obj);

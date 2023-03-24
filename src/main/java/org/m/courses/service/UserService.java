@@ -20,7 +20,7 @@ public class UserService {
     }
 
     public User get(Long id) {
-        return userDao.get(id).orElse(null);
+        return userDao.get(id);
     }
 
     public User create(User instance) {

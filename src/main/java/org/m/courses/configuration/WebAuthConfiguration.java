@@ -26,7 +26,7 @@ public class WebAuthConfiguration {
                 .httpBasic()
                 .and()
                 .authorizeRequests()
-                .antMatchers("/**").hasAnyRole(Role.ADMIN.name(), Role.TEACHER.name(), Role.USER.name())
+                .anyRequest().authenticated()
                 .and()
                 .userDetailsService(userDetailsService)
         ;
