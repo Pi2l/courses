@@ -25,7 +25,7 @@ public class UserDao extends AbstractDao<User> {
             throw new AccessDeniedException();
         }
 
-        return updateEntity( user );
+        return getRepository().save(user);
     }
 
     @Override

@@ -113,13 +113,6 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    void updateNotExistingUserTest() {
-        User user = userBuilder.build();
-
-        assertNull( userDao.update(user) );
-    }
-
-    @Test
     void updateUserWithNullFieldsTest() {
         User user = userBuilder.toDB();
         User userWithNullFields = new User();

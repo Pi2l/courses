@@ -61,16 +61,6 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
             throw new AccessDeniedException();
         }
 
-        return updateEntity(entity);
-    }
-
-    protected T updateEntity(T entity) {
-        Optional<T> fromDB = getRepository().findOne(
-                buildEqualSpec("id", entity.getId()) );
-
-        if (fromDB.isEmpty()) {
-            return null;
-        }
         return getRepository().save(entity);
     }
 
