@@ -2,19 +2,15 @@ package org.m.courses.dao;
 
 import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Identity;
-import org.m.courses.model.Role;
 import org.m.courses.repository.PrimaryRepository;
 import org.m.courses.service.UserAuthorizationService;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.m.courses.dao.specification.SpecificationUtil.buildEqualSpec;
-import static org.springframework.data.jpa.domain.Specification.not;
-import static org.springframework.data.jpa.domain.Specification.where;
 
-public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Long> {
+public abstract class AbstractDao<T extends Identity<Long>> {
 
     protected final UserAuthorizationService authorizationService;
 
@@ -28,25 +24,23 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
         return authorizationService.isAdmin();
     }
 
-    protected Specification<T> buildReadOnlySpec() {
-        if ( !isAdmin() ) {
-            return not(buildEqualSpec("role", Role.ADMIN));
-        }
-        return where( null );
+    public List<T> getAll(Specification<T> filter) {
+        return getRepository().findAll( filter );
     }
 
-    @Override
     public List<T> getAll() {
-        return getRepository().findAll( buildReadOnlySpec() );
+        return getAll( null );
     }
 
-    @Override
-    public T get(Long id) {
-        return getRepository().findOne( buildReadOnlySpec().and( buildEqualSpec("id", id)) )
+    public T get(Long id, Specification<T> filter) {
+        Specification<T> equalIdSpec = buildEqualSpec("id", id);
+        return getRepository().findOne( equalIdSpec.and(filter) )
                 .orElse(null);
     }
+    public T get(Long id) {
+        return get(id, null);
+    }
 
-    @Override
     public T create(T entity) {
         if ( isAdmin() ) {
             return getRepository().save(entity);
@@ -54,7 +48,6 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
         throw new AccessDeniedException();
     }
 
-    @Override
     public T update(T entity) {
 
         if ( !canModify( entity.getId() ) ) {
@@ -64,7 +57,6 @@ public abstract class AbstractDao<T extends Identity<Long>> implements Dao<T, Lo
         return getRepository().save(entity);
     }
 
-    @Override
     public void delete(Long id) {
         if ( !canModify(id) ) {
             throw new AccessDeniedException();

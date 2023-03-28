@@ -1,13 +1,20 @@
 package org.m.courses.dao;
 
 import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.repository.PrimaryRepository;
 import org.m.courses.repository.UserRepository;
 import org.m.courses.service.UserAuthorizationService;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+
+import static org.m.courses.dao.specification.SpecificationUtil.buildEqualSpec;
+import static org.springframework.data.jpa.domain.Specification.not;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @Component
 public class UserDao extends AbstractDao<User> {
@@ -17,6 +24,19 @@ public class UserDao extends AbstractDao<User> {
     public UserDao(UserRepository repository, UserAuthorizationService authorizationService) {
         super(authorizationService);
         this.repository = repository;
+    }
+
+    @Override
+    public List<User> getAll(Specification<User> filter) {
+        return getRepository().findAll( buildReadOnlySpec().and( filter ) );
+    }
+
+    @Override
+    public User get(Long id, Specification<User> filter) {
+        Specification<User> equalIdSpec = buildEqualSpec("id", id);
+
+        return getRepository().findOne( equalIdSpec.and( filter ).and( buildReadOnlySpec() ) )
+                .orElse(null);
     }
 
     @Override
@@ -48,5 +68,12 @@ public class UserDao extends AbstractDao<User> {
     @Override
     protected boolean canModify(Long id) {
         return super.canModify(id) || authorizationService.getCurrentUser().getId().equals( id );
+    }
+
+    private Specification<User> buildReadOnlySpec() {
+        if ( !isAdmin() ) {
+            return not(buildEqualSpec("role", Role.ADMIN));
+        }
+        return where( null );
     }
 }
