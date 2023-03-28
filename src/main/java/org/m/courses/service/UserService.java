@@ -1,37 +1,38 @@
 package org.m.courses.service;
 
+import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.UserDao;
 import org.m.courses.model.User;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
-public class UserService {
+public class UserService extends AbstractService<User> {
 
     private UserDao userDao;
 
-    public UserService(UserDao userDao) {
+    private BCryptPasswordEncoder passwordEncoder;
+
+    public UserService(UserDao userDao, BCryptPasswordEncoder passwordEncoder) {
         this.userDao = userDao;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public List<User> getAll() {
-        return userDao.getAll();
+    @Override
+    protected AbstractDao<User> getDao() {
+        return userDao;
     }
 
-    public User get(Long id) {
-        return userDao.get(id);
+    @Override
+    public User create(User user) {
+        user.setPassword( passwordEncoder.encode( user.getPassword() ) );
+        return super.create( user );
     }
 
-    public User create(User instance) {
-        return userDao.create( instance );
+    @Override
+    public User update(User user) {
+        user.setPassword( passwordEncoder.encode( user.getPassword() ) );
+        return super.update( user );
     }
 
-    public User update(User instance) {
-        return userDao.update( instance );
-    }
-
-    public void delete(Long id) {
-        userDao.delete(id);
-    }
 }
