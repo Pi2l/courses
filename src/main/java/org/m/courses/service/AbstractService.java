@@ -9,29 +9,29 @@ public abstract class AbstractService<T extends Identity<Long>> {
 
     protected abstract AbstractDao<T> getDao();
 
-    protected List<T> getAll() {
+    public List<T> getAll() {
         return getDao().getAll();
     }
 
-    protected T get(Long id) {
+    public T get(Long id) {
         return getDao().get(id);
     }
 
-    protected T create(T entity) {
+    public T create(T entity) {
         if (entity == null) {
             throw new IllegalArgumentException("entity cannot be null");
         }
         return getDao().create( entity );
     }
 
-    protected T update(T entity) {
+    public T update(T entity) {
         if (entity == null) {
             throw new IllegalArgumentException("entity cannot be null");
         }
         return getDao().update( entity );
     }
 
-    protected void delete(Long id) {
+    public void delete(Long id) {
         getDao().delete(id);
     }
 }
