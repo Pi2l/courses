@@ -27,15 +27,14 @@ public class UserDao extends AbstractDao<User> {
     }
 
     @Override
-    public List<User> getAll(Specification<User> filter) {
-        return getRepository().findAll( buildReadOnlySpec().and( filter ) );
+    public List<User> getAll() {
+        return getRepository().findAll( buildReadOnlySpec() );
     }
 
-    @Override
-    public User get(Long id, Specification<User> filter) {
+    public User get(Long id) {
         Specification<User> equalIdSpec = buildEqualSpec("id", id);
 
-        return getRepository().findOne( equalIdSpec.and( filter ).and( buildReadOnlySpec() ) )
+        return getRepository().findOne( equalIdSpec.and( buildReadOnlySpec() ) )
                 .orElse(null);
     }
 

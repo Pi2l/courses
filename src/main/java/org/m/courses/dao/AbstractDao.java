@@ -24,21 +24,13 @@ public abstract class AbstractDao<T extends Identity<Long>> {
         return authorizationService.isAdmin();
     }
 
-    public List<T> getAll(Specification<T> filter) {
-        return getRepository().findAll( filter );
-    }
-
     public List<T> getAll() {
-        return getAll( null );
+        return getRepository().findAll();
     }
 
-    public T get(Long id, Specification<T> filter) {
-        Specification<T> equalIdSpec = buildEqualSpec("id", id);
-        return getRepository().findOne( equalIdSpec.and(filter) )
-                .orElse(null);
-    }
     public T get(Long id) {
-        return get(id, null);
+        return getRepository().findOne( buildEqualSpec("id", id) )
+                .orElse(null);
     }
 
     public T create(T entity) {
