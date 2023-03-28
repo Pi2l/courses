@@ -35,7 +35,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
         assertNotNull( userService.get( user.getId() ) );
         assertNotNull( userService.get( teacher.getId() ) );
-        assertThrowsExactly(ItemNotFoundException.class, () -> userService.get( admin.getId() ) );
+        assertNull( userService.get( admin.getId() ) );
     }
 
     @Test
@@ -92,7 +92,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
         AuthManager.loginAs( user );
 
-        assertThrowsExactly(ItemNotFoundException.class, () -> userService.update( updatedAdmin ) );
+        assertThrowsExactly(AccessDeniedException.class, () -> userService.update( updatedAdmin ) );
         User updatedUserFromDB = userService.update( updatedUser );
         assertEntitiesEqual( updatedUser, updatedUserFromDB );
     }
@@ -106,7 +106,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
         assertThrowsExactly(AccessDeniedException.class, () -> userService.delete( admin.getId() ) );
         userService.delete( user.getId() );
-        assertThrowsExactly(ItemNotFoundException.class, () -> userService.get( user.getId()) );
+        assertNull( userService.get( user.getId()) );
 
         AuthManager.loginAs( admin );
         assertEquals( userService.get(admin.getId()), admin );

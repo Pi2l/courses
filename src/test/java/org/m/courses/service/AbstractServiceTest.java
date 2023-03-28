@@ -66,7 +66,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
 
         getService().delete( entity.getId() );
 
-        assertThrowsExactly(ItemNotFoundException.class, () -> getService().get( entity.getId() ));
+        assertNull(getService().get( entity.getId() ));
     }
 
 

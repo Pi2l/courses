@@ -1,7 +1,6 @@
 package org.m.courses.service;
 
 import org.m.courses.dao.AbstractDao;
-import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 
 import java.util.List;
@@ -15,11 +14,7 @@ public abstract class AbstractService<T extends Identity<Long>> {
     }
 
     protected T get(Long id) {
-        T entity = getDao().get(id);
-        if (entity == null) {
-            throw new ItemNotFoundException();
-        }
-        return entity;
+        return getDao().get(id);
     }
 
     protected T create(T entity) {
@@ -32,9 +27,6 @@ public abstract class AbstractService<T extends Identity<Long>> {
     protected T update(T entity) {
         if (entity == null) {
             throw new IllegalArgumentException("entity cannot be null");
-        }
-        if (getDao().get( entity.getId() ) == null) {
-            throw new ItemNotFoundException();
         }
         return getDao().update( entity );
     }
