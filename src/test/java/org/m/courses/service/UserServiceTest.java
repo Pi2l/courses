@@ -9,6 +9,7 @@ import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -64,7 +65,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
         String passwd = user.getPassword();
         User createdUser = userService.create( user );
 
-        assertTrue( passwordEncoder.matches(passwd, createdUser.getPassword()) );
+        assertTrue( BCrypt.checkpw(passwd, createdUser.getPassword()) );
     }
 
 
@@ -77,7 +78,24 @@ public class UserServiceTest extends AbstractServiceTest<User> {
         createdUser.setPassword(passwd);
         User updatedUser = userService.update(createdUser);
 
-        assertTrue( passwordEncoder.matches(passwd, updatedUser.getPassword()) );
+        assertTrue( BCrypt.checkpw(passwd, updatedUser.getPassword()) );
+    }
+
+    @Test
+    void updatePasswordThatIsAlreadyEncryptedTest() {
+        User user = userBuilder.buildNew();
+        user = userService.create( user );
+        String oldPasswd = user.getPassword();
+
+        user = userBuilder
+                .setId(user.getId())
+                .setPassword(user.getPassword()).build();
+
+
+        User updatedUser = userService.update( user );
+
+        assertEquals( user.getPassword(), updatedUser.getPassword() );
+        assertEquals( oldPasswd, updatedUser.getPassword() );
     }
 
     @Test

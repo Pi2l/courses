@@ -31,13 +31,19 @@ public class UserService extends AbstractService<User> {
 
     @Override
     public User update(User user) {
-        if (user.getPassword() == null) {
-            User oldUser = userDao.get( user.getId() );
-            if (oldUser != null) {
-                user.setPassword( oldUser.getPassword() );
+        User oldUser = userDao.get( user.getId() );
+        if (oldUser != null) {
+
+            String password = user.getPassword();
+            if (oldUser.getPassword().equals(password)) {
+                return super.update( user );
             }
-        } else {
-            user.setPassword( passwordEncoder.encode( user.getPassword() ) );
+
+            if (password == null || password.isEmpty()) {
+                user.setPassword( oldUser.getPassword() );
+            } else {
+                user.setPassword( passwordEncoder.encode( user.getPassword() ) );
+            }
         }
 
         return super.update( user );
