@@ -4,6 +4,7 @@ package org.m.courses.api.v1.controller.common;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public abstract class AbstractController<
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Response create(@RequestBody Request requestBody) {
         Entity createdEntity = createEntity( requestBody.createEntity() );
 
@@ -38,6 +40,7 @@ public abstract class AbstractController<
     }
 
     @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public Response update(@PathVariable Long id, @RequestBody Request requestBody) {
         Entity entity = getEntity(id);
 
@@ -46,6 +49,7 @@ public abstract class AbstractController<
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         getService().delete( id );
     }
@@ -53,7 +57,7 @@ public abstract class AbstractController<
     private Entity getEntity(Long id) {
         Entity entity = getService().get(id);
         if (entity == null) {
-            throw new ItemNotFoundException();
+            throw new ItemNotFoundException(id);
         }
         return entity;
     }

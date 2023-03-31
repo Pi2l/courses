@@ -1,4 +1,4 @@
-package org.m.courses.api.v1.controller.users;
+package org.m.courses.api.v1.controller.user;
 
 import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.model.User;
