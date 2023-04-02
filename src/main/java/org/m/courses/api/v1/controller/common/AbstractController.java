@@ -5,8 +5,10 @@ import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.groups.Default;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +35,7 @@ public abstract class AbstractController<
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Response create(@RequestBody Request requestBody) {
+    public Response create(@Validated({ CreateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
         Entity createdEntity = createEntity( requestBody.createEntity() );
 
         return convertToResponse( createdEntity );
@@ -41,7 +43,7 @@ public abstract class AbstractController<
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Response update(@PathVariable Long id, @RequestBody Request requestBody) {
+    public Response update(@PathVariable Long id, @Validated({ UpdateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
         Entity entity = getEntity(id);
 
         Entity updatedEntity = updateEntity( requestBody.updateEntity(entity) );

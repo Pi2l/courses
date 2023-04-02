@@ -4,18 +4,30 @@ import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 public class UserRequest extends AbstractRequest<User> {
 
+    @NotBlank
     private String firstName;
 
+    @NotBlank
     private String lastName;
 
+    @NotBlank
+    @Size(max = 20)
     private String phoneNumber;
 
+    @NotBlank
     private String login;
 
+    @NotBlank
     private String password;
 
+    @NotNull
     private Role role;
 
     public UserRequest() {

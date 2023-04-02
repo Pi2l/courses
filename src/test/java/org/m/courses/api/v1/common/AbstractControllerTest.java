@@ -12,6 +12,7 @@ import org.m.courses.service.AbstractService;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -21,6 +22,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -120,6 +122,61 @@ public abstract class AbstractControllerTest<
         Response expectedResponse = convertToResponse( resultCaptor.getResult() );
         resultAction.andExpect( content().json( getJson( expectedResponse ) ) );
     }
+
+    @Test
+    public void createNotValidEntityTest() {
+//        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
+        whenCreateInService( any( getEntityClass() ) )
+                .thenAnswer( invocation -> {
+                    Entity entity = invocation.getArgument( 0, getEntityClass() );
+                    entity.setId( getRandomId() );
+                    return entity;
+                });
+
+        getCreateWithWrongValuesTestParameters().forEach( this::doCreateWithWrongValuesTestParameters );
+    }
+
+    private void doCreateWithWrongValuesTestParameters(Consumer<Request> notValidValue, Pair<String, String> errorMsg) {
+        Request request = convertToRequest(getNewEntity());
+        notValidValue.accept(request);
+        try {
+            mockMvc.perform(post(getControllerPath())
+                            .content(getJson(request))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(jsonPath("$." + errorMsg.getFirst()).value(errorMsg.getSecond()))
+                    .andExpect(status().isNotAcceptable());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
+    public void updateNotValidEntityTest() {
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
+
+        getUpdateWithWrongValuesTestParameters().forEach( this::doUpdateWithWrongValuesTestParameters );
+    }
+
+    private void doUpdateWithWrongValuesTestParameters(Consumer<Request> notValidValue, Pair<String, String> errorMsg) {
+        Entity entity = getNewEntity();
+        Request request = convertToRequest( entity );
+        notValidValue.accept(request);
+
+        try {
+            mockMvc.perform( put( getControllerPath() + "/{id}", entity.getId() )
+                            .content(getJson(request))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect( jsonPath("$." + errorMsg.getFirst()).value(errorMsg.getSecond()) )
+                    .andExpect( status().isNotAcceptable() );
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
 
     @Test
     public void updateEntity() throws Exception {
@@ -228,5 +285,8 @@ public abstract class AbstractControllerTest<
 
     protected abstract List<Function<Entity, Object>> getValueToBeUpdated();
 
-    protected abstract Map< Consumer< Request >, String > getCreateWithWrongValuesTestParameters();
+    protected abstract Map< Consumer< Request >, Pair< String, String > > getCreateWithWrongValuesTestParameters();
+
+    protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
+
 }

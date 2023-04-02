@@ -5,10 +5,12 @@ import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,13 +80,22 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
-    protected Map<Consumer<UserRequest>, String> getCreateWithWrongValuesTestParameters() {
-        Map<Consumer<UserRequest>, String> wrongValues = new HashMap<>();
+    protected Map<Consumer<UserRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
+        Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
 
-        wrongValues.put( userRequest -> userRequest.setFirstName(null), "" );
-//        wrongValues.put( userRequest -> userRequest.setFirstName(null), "" );
-//        wrongValues.put( userRequest -> userRequest.setFirstName(null), "" );
+        wrongValues.put( userRequest -> userRequest.setFirstName(null), Pair.of("firstName", "must not be blank") );
+        wrongValues.put( userRequest -> userRequest.setLastName(null), Pair.of("lastName", "must not be blank") );
+        wrongValues.put( userRequest -> userRequest.setPhoneNumber(null), Pair.of("phoneNumber", "must not be blank") );
+        wrongValues.put( userRequest -> userRequest.setPhoneNumber("12345678901234567890123456789012345678901"), Pair.of("phoneNumber", "size must be between 0 and 20") );
+        wrongValues.put( userRequest -> userRequest.setLogin(null), Pair.of("login", "must not be blank") );
+        wrongValues.put( userRequest -> userRequest.setPassword(null), Pair.of("password", "must not be blank") );
+        wrongValues.put( userRequest -> userRequest.setRole(null), Pair.of("role", "must not be null") );
         return wrongValues;
+    }
+
+    @Override
+    protected Map<Consumer<UserRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
+        return getCreateWithWrongValuesTestParameters();
     }
 
     @Override
