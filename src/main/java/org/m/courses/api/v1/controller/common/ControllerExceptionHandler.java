@@ -2,6 +2,7 @@ package org.m.courses.api.v1.controller.common;
 
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
+import org.m.courses.exception.UniqueFieldViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -33,6 +34,15 @@ public class ControllerExceptionHandler {
         for (FieldError field : exception.getFieldErrors()) {
             validationErrorsMap.put( field.getField(), field.getDefaultMessage() );
         }
+
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    @ExceptionHandler(UniqueFieldViolationException.class)
+    ResponseEntity<Object> handlerValidationException(UniqueFieldViolationException exception) {
+        Map<String, String> validationErrorsMap = new HashMap<>();
+
+        validationErrorsMap.put(exception.getField(), exception.getMessage());
 
         return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
     }

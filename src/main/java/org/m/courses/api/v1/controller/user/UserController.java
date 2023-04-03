@@ -3,6 +3,7 @@ package org.m.courses.api.v1.controller.user;
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.PatchFieldValidationException;
+import org.m.courses.exception.UniqueFieldViolationException;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
@@ -27,11 +28,11 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
 
     private final Validator validator;
 
-    private ConversionService conversionService;
+    private final ConversionService conversionService;
 
-    public UserController(UserService userService, ConversionService conversionService) {
+    public UserController(UserService userService, ConversionService conversionService, Validator validator) {
         this.userService = userService;
-        this.validator = Validation.buildDefaultValidatorFactory().getValidator();
+        this.validator = validator;
         this.conversionService = conversionService;
     }
 
@@ -44,32 +45,31 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     }
 
     private void patchField(User user, Map.Entry< String, Object > field) {
-        String fieldValue;
         switch (field.getKey()) {
             case "firstName":
-                fieldValue = conversionService.convert(field.getValue(), String.class);
-                validateField("firstName", fieldValue);
-                user.setFirstName( fieldValue );
+                String firstName = conversionService.convert(field.getValue(), String.class);
+                validateField("firstName", firstName);
+                user.setFirstName( firstName );
                 return;
             case "lastName":
-                fieldValue = conversionService.convert(field.getValue(), String.class);
-                validateField("lastName", fieldValue);
-                user.setLastName( fieldValue );
+                String lastName = conversionService.convert(field.getValue(), String.class);
+                validateField("lastName", lastName);
+                user.setLastName( lastName );
                 return;
             case "phoneNumber":
-                fieldValue = conversionService.convert(field.getValue(), String.class);
-                validateField("phoneNumber", fieldValue);
-                user.setPhoneNumber( fieldValue );
+                String phoneNumber = conversionService.convert(field.getValue(), String.class);
+                validateField("phoneNumber", phoneNumber);
+                user.setPhoneNumber( phoneNumber );
                 return;
             case "login":
-                fieldValue = conversionService.convert(field.getValue(), String.class);
-                validateField("login", fieldValue);
-                user.setLogin( fieldValue );
+                String login = conversionService.convert(field.getValue(), String.class);
+                validateField("login", login);
+                user.setLogin( login );
                 return;
             case "password":
-                fieldValue = conversionService.convert(field.getValue(), String.class);
-                validateField("password", fieldValue);
-                user.setPassword( fieldValue );
+                String password = conversionService.convert(field.getValue(), String.class);
+                validateField("password", password);
+                user.setPassword( password );
                 return;
             case "role":
                 Object roleObject = field.getValue();
@@ -104,5 +104,26 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     @Override
     protected AbstractService<User> getService() {
         return userService;
+    }
+
+    @Override
+    protected User createEntity(User entity) {
+        if (userService.isUnique( entity )) {
+            return getService().create(entity);
+        }
+        throw new UniqueFieldViolationException("login");
+    }
+
+    @Override
+    protected User updateEntity(User entity) {
+        if (userService.isUnique( entity )) {
+            return getService().update( entity );
+        }
+        throw new UniqueFieldViolationException("login");
+    }
+
+    @Override
+    protected User patchEntity(User entity) {
+        return updateEntity(entity);
     }
 }

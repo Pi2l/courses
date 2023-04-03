@@ -34,12 +34,12 @@ public class UserRequest extends AbstractRequest<User> {
     }
 
     public UserRequest(User user) {
-        this.firstName = user.getFirstName();
-        this.lastName = user.getLastName();
-        this.phoneNumber = user.getPhoneNumber();
-        this.login = user.getLogin();
-        this.password = user.getPassword();
-        this.role = user.getRole();
+        this.setFirstName( user.getFirstName() );
+        this.setLastName( user.getLastName() );
+        this.setPhoneNumber( user.getPhoneNumber() );
+        this.setLogin( user.getLogin() );
+        this.setPassword( user.getPassword() );
+        this.setRole( user.getRole() );
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
+import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.model.User;
@@ -154,6 +155,7 @@ public abstract class AbstractControllerTest<
 
     private void doUpdateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
         Entity entity = getNewEntity();
+        whenGetEntity(any(Long.class), entity);
         Request request = convertToRequest( entity );
         invalidValue.accept(request);
 
@@ -223,6 +225,8 @@ public abstract class AbstractControllerTest<
 
     @Test
     public void createEntityWithOptionalFieldsTest() {
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
+
         getCreateWithOptionalValuesTestParameters().forEach( this::doCreateWithOptionalValuesTestParameters );
     }
 
@@ -233,8 +237,6 @@ public abstract class AbstractControllerTest<
         Request request = convertToRequest( entity );
 
         optionalValueSetter.accept(request);
-
-        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
 
         try {
             ResultActions resultAction = mockMvc.perform( post(getControllerPath() )
@@ -260,7 +262,7 @@ public abstract class AbstractControllerTest<
     public void updateEntityWithOptionalFieldsTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
 
-        getCreateWithOptionalValuesTestParameters().forEach( this::doUpdateWithOptionalValuesTestParameters );
+        getUpdateWithOptionalValuesTestParameters().forEach( this::doUpdateWithOptionalValuesTestParameters );
     }
 
     private void doUpdateWithOptionalValuesTestParameters(Consumer<Request> optionalValueSetter, Pair<Function<Entity, Object>, Object> valueProvider) {
@@ -269,8 +271,6 @@ public abstract class AbstractControllerTest<
         whenGetEntity(any(Long.class), entity);
 
         optionalValueSetter.accept(request);
-
-        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
         try {
             ResultActions resultAction = mockMvc.perform( put(getControllerPath() + "/{id}", entity.getId() )
@@ -403,7 +403,7 @@ public abstract class AbstractControllerTest<
 
     protected abstract List<Function<Entity, Object>> getValueToBeUpdated();
 
-    protected abstract Map< Consumer< Request >, Pair< String, String > > getCreateWithWrongValuesTestParameters();
+    protected abstract Map<Consumer<Request>, Pair<String, String>> getCreateWithWrongValuesTestParameters();
 
     protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
@@ -412,4 +412,7 @@ public abstract class AbstractControllerTest<
     protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
 
     protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters();
+
+    protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getUpdateWithOptionalValuesTestParameters();
+
 }

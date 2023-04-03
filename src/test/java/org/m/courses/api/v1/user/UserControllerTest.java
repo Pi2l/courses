@@ -19,7 +19,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -75,6 +77,8 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
         valuesToBeUpdated.add(User::getPhoneNumber);
         valuesToBeUpdated.add(User::getLogin);
         valuesToBeUpdated.add(User::getPassword);
+        valuesToBeUpdated.add(User::getRole);
+//        Roles?
 
         return valuesToBeUpdated;
     }
@@ -83,24 +87,76 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     protected Map<Consumer<UserRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
         Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
 
-        wrongValues.put( userRequest -> userRequest.setFirstName(null), Pair.of("firstName", "must not be blank") );
-        wrongValues.put( userRequest -> userRequest.setLastName(null), Pair.of("lastName", "must not be blank") );
-        wrongValues.put( userRequest -> userRequest.setPhoneNumber(null), Pair.of("phoneNumber", "must not be blank") );
-        wrongValues.put( userRequest -> userRequest.setPhoneNumber("12345678901234567890123456789012345678901"), Pair.of("phoneNumber", "size must be between 0 and 20") );
-        wrongValues.put( userRequest -> userRequest.setLogin(null), Pair.of("login", "must not be blank") );
-        wrongValues.put( userRequest -> userRequest.setPassword(null), Pair.of("password", "must not be blank") );
-        wrongValues.put( userRequest -> userRequest.setRole(null), Pair.of("role", "must not be null") );
+        setupWrongValues(wrongValues);
+        wrongValues.put(userRequest -> userRequest.setPassword(null), Pair.of("password", "must not be blank") );
+        wrongValues.put(userRequest -> userRequest.setPassword(""), Pair.of("password", "must not be blank") );
+        wrongValues.put(userRequest -> userRequest.setPassword("   "), Pair.of("password", "must not be blank") );
+
         return wrongValues;
+    }
+
+    private void setupWrongValues(Map<Consumer<UserRequest>, Pair<String, String>> wrongValues) {
+        wrongValues.put(
+            userRequest -> userRequest.setFirstName(null),
+            Pair.of("firstName", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setFirstName(""),
+            Pair.of("firstName", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setFirstName("   "),
+            Pair.of("firstName", "must not be blank") );
+
+        wrongValues.put(
+            userRequest -> userRequest.setLastName(null),
+            Pair.of("lastName", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setLastName(""),
+            Pair.of("lastName", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setLastName("   "),
+            Pair.of("lastName", "must not be blank") );
+
+        wrongValues.put(
+            userRequest -> userRequest.setPhoneNumber(null),
+            Pair.of("phoneNumber", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setPhoneNumber(""),
+            Pair.of("phoneNumber", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setPhoneNumber("   "),
+            Pair.of("phoneNumber", "must not be blank") );
+        wrongValues.put(
+            userRequest -> userRequest.setPhoneNumber("12345678901234567890123456789012345678901"),
+            Pair.of("phoneNumber", "size must be between 0 and 20") );
+
+        wrongValues.put(
+            userRequest -> userRequest.setLogin(null),
+            Pair.of("login", "must not be blank") );
+        wrongValues.put(
+            userRequest -> {
+                when(getService().isUnique( any( getEntityClass() ) )).thenReturn(false);
+                userRequest.setLogin("login");
+            },
+            Pair.of("login", "must be unique") );//unqinue
+
+        wrongValues.put(
+            userRequest -> userRequest.setRole(null),
+            Pair.of("role", "must not be null") );
     }
 
     @Override
     protected Map<Consumer<UserRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
-        return getCreateWithWrongValuesTestParameters();
+        Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+
+        setupWrongValues(wrongValues);
+
+        return wrongValues;
     }
 
     @Override
     protected Map<Map<String, Object>, Pair<Function<User, Object>, Object>> getPatchValuesTestParameters() {
         Map<Map<String, Object>, Pair<Function<User, Object>, Object>> map = new HashMap<>();
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
 
         map.put(
                 Map.of("firstName", "firstName1"),
@@ -123,8 +179,8 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
                 Pair.of( User::getPassword, "password1" ) );
 
         map.put(
-                Map.of("role", Role.USER),
-                Pair.of( User::getRole, Role.USER ) );
+                Map.of("role", Role.TEACHER),
+                Pair.of( User::getRole, Role.TEACHER ) );
 
         return map;
     }
@@ -132,45 +188,76 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Override
     protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
         Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(false);
 
-        map.put(
-                Map.of("firstName", ""),
-                Pair.of( "firstName", "must not be blank" ) );
+        getPatchInvalidValues(map);
 
-        map.put(
-                Map.of("lastName", ""),
-                Pair.of("lastName", "must not be blank" ) );
+        return map;
+    }
 
-        map.put(
-                Map.of("phoneNumber", ""),
-                Pair.of( "phoneNumber", "must not be blank" ) );
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+        setupBlankField(map, "firstName");
+        setupBlankField(map, "lastName");
+        setupBlankField(map, "phoneNumber");
+        setupBlankField(map, "login");
+        setupBlankField(map, "password");
 
         map.put(
                 Map.of("phoneNumber", "12345678901234567890123456789012345678901"),
                 Pair.of( "phoneNumber", "size must be between 0 and 20" ) );
 
         map.put(
-                Map.of("login", ""),
-                Pair.of( "login", "must not be blank" ) );
-
-        map.put(
-                Map.of("password", ""),
-                Pair.of( "password", "must not be blank" ) );
+                Map.of("login", "notUniqueLogin"),//unqinue
+                Pair.of( "login", "must be unique" ) );
 
         Map<String, Object> roleMap = new HashMap<>();
         roleMap.put("role", null);
         map.put(
                 roleMap,
                 Pair.of( "role", "must not be null" ) );
-
-        return map;
     }
+
+    private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+        Map<String, Object> fieldMap = new HashMap<>();
+        fieldMap.put(fieldName, null);
+        map.put(
+                Map.of(fieldName, ""),
+                Pair.of( fieldName, "must not be blank" ) );
+        map.put(
+                Map.of(fieldName, "   "),
+                Pair.of( fieldName, "must not be blank" ) );
+        map.put(
+                fieldMap,
+                Pair.of( fieldName, "must not be blank" ) );
+    }
+
+    @Test
+    @Override
+    public void updateEntity() throws Exception {
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
+        super.updateEntity();
+    }
+
+    @Test
+    @Override
+    public void createEntityTest() throws Exception {
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
+        super.createEntityTest();
+    }
+
 
     @Override
     protected Map< Consumer< UserRequest >, Pair< Function<User, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
         Map<Consumer<UserRequest>, Pair<Function<User, Object>, Object>> optionalValues = new HashMap<>();
-        
+
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
+
         return optionalValues;
+    }
+
+    @Override
+    protected Map<Consumer<UserRequest>, Pair<Function<User, Object>, Object>> getUpdateWithOptionalValuesTestParameters() {
+        return getCreateWithOptionalValuesTestParameters();
     }
 
     @Override

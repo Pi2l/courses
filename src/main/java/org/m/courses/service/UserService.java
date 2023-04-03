@@ -6,6 +6,9 @@ import org.m.courses.model.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.validation.constraints.NotNull;
+import java.util.Optional;
+
 @Service
 public class UserService extends AbstractService<User> {
 
@@ -49,4 +52,9 @@ public class UserService extends AbstractService<User> {
         return super.update( user );
     }
 
+    public boolean isUnique(User user) {
+        Optional<User> other = userDao.findByLogin(user.getLogin());
+
+        return other.isEmpty() || other.get().getId().equals(user.getId());
+    }
 }

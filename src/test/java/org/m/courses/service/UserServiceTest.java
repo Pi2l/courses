@@ -130,6 +130,17 @@ public class UserServiceTest extends AbstractServiceTest<User> {
         assertEquals( userService.get(admin.getId()), admin );
     }
 
+    @Test
+    void isLoginUniqueTest() {
+        User user1 = userService.create( userBuilder.buildNew() );
+        User user2 = userService.create( userBuilder.buildNew() );
+
+        user2.setLogin( user1.getLogin() );
+
+        assertTrue( userService.isUnique(user1) );
+        assertFalse( userService.isUnique(user2) );
+    }
+
     @Override
     protected AbstractService<User> getService() {
         return userService;
