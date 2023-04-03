@@ -222,6 +222,77 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
+    public void createEntityWithOptionalFieldsTest() {
+        getCreateWithOptionalValuesTestParameters().forEach( this::doCreateWithOptionalValuesTestParameters );
+    }
+
+    private void doCreateWithOptionalValuesTestParameters(Consumer<Request> optionalValueSetter, Pair<Function<Entity, Object>, Object> valueProvider) {
+        Entity entity = getNewEntity();
+
+        whenGetEntity(any(Long.class), entity);
+        Request request = convertToRequest( entity );
+
+        optionalValueSetter.accept(request);
+
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
+
+        try {
+            ResultActions resultAction = mockMvc.perform( post(getControllerPath() )
+                            .content(getJson(request))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isCreated());
+
+            Entity updatedEntity = resultCaptor.getResult();
+
+            Response expectedResponse = convertToResponse( updatedEntity );
+            resultAction.andExpect( content().json( getJson( expectedResponse ) ) );
+
+            assertEquals( valueProvider.getFirst().apply(updatedEntity), valueProvider.getSecond() );
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
+    public void updateEntityWithOptionalFieldsTest() {
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
+
+        getCreateWithOptionalValuesTestParameters().forEach( this::doUpdateWithOptionalValuesTestParameters );
+    }
+
+    private void doUpdateWithOptionalValuesTestParameters(Consumer<Request> optionalValueSetter, Pair<Function<Entity, Object>, Object> valueProvider) {
+        Entity entity = getNewEntity();
+        Request request = convertToRequest( entity );
+        whenGetEntity(any(Long.class), entity);
+
+        optionalValueSetter.accept(request);
+
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
+
+        try {
+            ResultActions resultAction = mockMvc.perform( put(getControllerPath() + "/{id}", entity.getId() )
+                            .content(getJson(request))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            Entity updatedEntity = resultCaptor.getResult();
+
+            Response expectedResponse = convertToResponse( updatedEntity );
+            resultAction.andExpect( content().json( getJson( expectedResponse ) ) );
+
+            assertEquals( valueProvider.getFirst().apply(updatedEntity), valueProvider.getSecond() );
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
     public void updateEntity() throws Exception {
         Entity entity = getNewEntity();
 
@@ -339,4 +410,6 @@ public abstract class AbstractControllerTest<
     protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Object> > getPatchValuesTestParameters();
 
     protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
+
+    protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters();
 }

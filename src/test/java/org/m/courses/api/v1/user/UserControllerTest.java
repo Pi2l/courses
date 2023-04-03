@@ -167,6 +167,13 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
+    protected Map< Consumer< UserRequest >, Pair< Function<User, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
+        Map<Consumer<UserRequest>, Pair<Function<User, Object>, Object>> optionalValues = new HashMap<>();
+        
+        return optionalValues;
+    }
+
+    @Override
     protected UserService getService() {
         return userService;
     }
