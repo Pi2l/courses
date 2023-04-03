@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.groups.Default;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class AbstractController<
@@ -50,6 +51,19 @@ public abstract class AbstractController<
         return convertToResponse( updatedEntity );
     }
 
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Response patch(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
+        Entity entity = getEntity(id);
+
+        entity = patchRequest( requestBody, entity );
+
+        Entity updatedEntity = patchEntity( entity );
+        return convertToResponse( updatedEntity );
+    }
+
+    protected abstract Entity patchRequest(Map<String, Object> requestBody, Entity entity);
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
@@ -65,6 +79,10 @@ public abstract class AbstractController<
     }
 
     protected Entity updateEntity(Entity entity) {
+        return getService().update( entity );
+    }
+
+    protected Entity patchEntity(Entity entity) {
         return getService().update( entity );
     }
 

@@ -99,6 +99,74 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
+    protected Map<Map<String, Object>, List< Pair<Function<User, Object>, Object>>> getPatchValuesTestParameters() {
+        Map<Map<String, Object>, List< Pair<Function<User, Object>, Object>>> map = new HashMap<>();
+
+        map.put(
+                Map.of("firstName", "firstName1"),
+                List.of( Pair.of( User::getFirstName, "firstName1" ) ) );
+
+        map.put(
+                Map.of("lastName", "lastName1"),
+                List.of( Pair.of( User::getLastName, "lastName1" ) ) );
+
+        map.put(
+                Map.of("phoneNumber", "phoneNumber1"),
+                List.of( Pair.of( User::getPhoneNumber, "phoneNumber1" ) ) );
+
+        map.put(
+                Map.of("login", "login1"),
+                List.of( Pair.of( User::getLogin, "login1" ) ) );
+
+        map.put(
+                Map.of("password", "password1"),
+                List.of( Pair.of( User::getPassword, "password1" ) ) );
+
+        map.put(
+                Map.of("role", Role.USER),
+                List.of( Pair.of( User::getRole, Role.USER ) ) );
+
+        return map;
+    }
+
+    @Override
+    protected Map<Map<String, Object>, List< Pair<String, Object> > > getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, List< Pair<String, Object>>> map = new HashMap<>();
+
+        map.put(
+                Map.of("firstName", ""),
+                List.of( Pair.of( "firstName", "must not be blank" ) ) );
+
+        map.put(
+                Map.of("lastName", ""),
+                List.of( Pair.of("lastName", "must not be blank" ) ) );
+
+        map.put(
+                Map.of("phoneNumber", ""),
+                List.of( Pair.of( "phoneNumber", "must not be blank" ) ) );
+
+        map.put(
+                Map.of("phoneNumber", "12345678901234567890123456789012345678901"),
+                List.of( Pair.of( "phoneNumber", "size must be between 0 and 20" ) ) );
+
+        map.put(
+                Map.of("login", ""),
+                List.of( Pair.of( "login", "must not be blank" ) ) );
+
+        map.put(
+                Map.of("password", ""),
+                List.of( Pair.of( "password", "must not be blank" ) ) );
+
+        Map<String, Object> roleMap = new HashMap<>();
+        roleMap.put("role", null);
+        map.put(
+                roleMap,
+                List.of( Pair.of( "role", "must not be null" ) ) );
+
+        return map;
+    }
+
+    @Override
     protected UserService getService() {
         return userService;
     }

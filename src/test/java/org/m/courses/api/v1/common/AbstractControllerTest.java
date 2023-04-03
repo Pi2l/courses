@@ -8,6 +8,7 @@ import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
+import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
@@ -67,8 +68,7 @@ public abstract class AbstractControllerTest<
     @Test
     void getExistingEntityByIdTest() throws Exception {
         Entity entity = getNewEntity();
-        when( getService().get( anyLong() ) )
-                .thenReturn(entity);
+        whenGetEntity(anyLong(), entity);
 
         Response expectedEntity = convertToResponse(entity);
 
@@ -81,8 +81,7 @@ public abstract class AbstractControllerTest<
     @Test
     void getNotExistingEntityByIdTest() throws Exception {
         Entity entity = getNewEntity();
-        when( getService().get( anyLong() ) )
-                .thenReturn(null);
+        whenGetEntity(anyLong(), null);
 
         mockMvc.perform( get( getControllerPath() + "/{id}", entity.getId() )
                         .accept( MediaType.APPLICATION_JSON ))
@@ -124,21 +123,15 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void createNotValidEntityTest() {
-//        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
-        whenCreateInService( any( getEntityClass() ) )
-                .thenAnswer( invocation -> {
-                    Entity entity = invocation.getArgument( 0, getEntityClass() );
-                    entity.setId( getRandomId() );
-                    return entity;
-                });
+    public void createInvalidEntityTest() {
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
 
         getCreateWithWrongValuesTestParameters().forEach( this::doCreateWithWrongValuesTestParameters );
     }
 
-    private void doCreateWithWrongValuesTestParameters(Consumer<Request> notValidValue, Pair<String, String> errorMsg) {
+    private void doCreateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
         Request request = convertToRequest(getNewEntity());
-        notValidValue.accept(request);
+        invalidValue.accept(request);
         try {
             mockMvc.perform(post(getControllerPath())
                             .content(getJson(request))
@@ -153,16 +146,16 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void updateNotValidEntityTest() {
+    public void updateInvalidEntityTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
         getUpdateWithWrongValuesTestParameters().forEach( this::doUpdateWithWrongValuesTestParameters );
     }
 
-    private void doUpdateWithWrongValuesTestParameters(Consumer<Request> notValidValue, Pair<String, String> errorMsg) {
+    private void doUpdateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
         Entity entity = getNewEntity();
         Request request = convertToRequest( entity );
-        notValidValue.accept(request);
+        invalidValue.accept(request);
 
         try {
             mockMvc.perform( put( getControllerPath() + "/{id}", entity.getId() )
@@ -177,6 +170,63 @@ public abstract class AbstractControllerTest<
         }
     }
 
+    @Test
+    public void patchEntityTest() {
+        getPatchValuesTestParameters().forEach( this::doPatchValuesTestParameters );
+    }
+
+    private void doPatchValuesTestParameters(Map<String, Object> requestedMap, List<Pair<Function<Entity, Object>, Object>> valueProviders) {
+        Entity entity = getNewEntity();
+        whenGetEntity( any( Long.class ), entity );
+
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
+
+        try {
+            mockMvc.perform( patch( getControllerPath() + "/{id}", entity.getId() )
+                            .content( getJson(requestedMap) )
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect( status().isNoContent() );
+
+            valueProviders.forEach( valueProvider -> {
+                assertEquals(valueProvider.getSecond(), valueProvider.getFirst().apply( resultCaptor.getResult() ));
+            });
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
+    public void patchInvalidEntityTest() {
+        getPatchInvalidValuesTestParameters().forEach( this::doPatchInvalidValuesTestParameters );
+    }
+
+    private void doPatchInvalidValuesTestParameters(Map<String, Object> requestedMap, List<Pair<String, Object>> valueProviders) {
+        Entity entity = getNewEntity();
+        whenGetEntity( any( Long.class ), entity );
+
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
+
+
+        valueProviders.forEach( valueProvider -> {
+
+            try {
+                mockMvc.perform( patch( getControllerPath() + "/{id}", entity.getId() )
+                                .content( getJson(requestedMap) )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON))
+                        .andDo(print())
+                        .andExpect( jsonPath("$." + valueProvider.getFirst())
+                                .value(valueProvider.getSecond()) )
+                        .andExpect( status().isNotAcceptable() );
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+    }
 
     @Test
     public void updateEntity() throws Exception {
@@ -189,8 +239,7 @@ public abstract class AbstractControllerTest<
 
         List<Function< Entity, Object >> valuesGetters = getValueToBeUpdated();
 
-        when( getService().get( entity.getId() ) )
-                .thenReturn( entity );
+        whenGetEntity(entity.getId(), entity);
 
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
@@ -207,6 +256,11 @@ public abstract class AbstractControllerTest<
         for ( Function< Entity, Object > getter : valuesGetters ) {
             assertEquals( getter.apply( entityWithNewValues ), getter.apply( updatedEntity ) );
         }
+    }
+
+    private void whenGetEntity(Long id, Entity entity) {
+        when( getService().get(id) )
+                .thenReturn(entity);
     }
 
     @Test
@@ -289,4 +343,7 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
+    protected abstract Map< Map<String, Object>, List< Pair<Function<Entity, Object>, Object> > > getPatchValuesTestParameters();
+
+    protected abstract Map< Map<String, Object>, List< Pair<String, Object> > > getPatchInvalidValuesTestParameters();
 }
