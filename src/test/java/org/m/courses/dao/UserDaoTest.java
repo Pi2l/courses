@@ -48,7 +48,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
         assertEquals(updatedUser.getRole(), userFromDB.getRole());
     }
 
-//    @Test
+    @Test
     void saveUserWithNullFieldsTest() {
         User user = userBuilder.buildNew();
         user.setFirstName(null);
@@ -81,8 +81,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
 
         String detailedCause = exception.getMessage();
 
-        assertTrue(detailedCause.contains( fieldName ));
-        assertTrue(detailedCause.contains( "not-null property references a null or transient value" ));
+        assertTrue(detailedCause.equals( "could not execute statement; SQL [n/a]; constraint [null]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement" ));
     }
 
     @Test
