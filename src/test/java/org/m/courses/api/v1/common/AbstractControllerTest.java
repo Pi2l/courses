@@ -175,7 +175,7 @@ public abstract class AbstractControllerTest<
         getPatchValuesTestParameters().forEach( this::doPatchValuesTestParameters );
     }
 
-    private void doPatchValuesTestParameters(Map<String, Object> requestedMap, List<Pair<Function<Entity, Object>, Object>> valueProviders) {
+    private void doPatchValuesTestParameters(Map<String, Object> requestedMap, Pair<Function<Entity, Object>, Object> valueProvider) {
         Entity entity = getNewEntity();
         whenGetEntity( any( Long.class ), entity );
 
@@ -189,9 +189,7 @@ public abstract class AbstractControllerTest<
                     .andDo(print())
                     .andExpect( status().isNoContent() );
 
-            valueProviders.forEach( valueProvider -> {
-                assertEquals(valueProvider.getSecond(), valueProvider.getFirst().apply( resultCaptor.getResult() ));
-            });
+            assertEquals(valueProvider.getSecond(), valueProvider.getFirst().apply( resultCaptor.getResult() ));
 
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -203,29 +201,24 @@ public abstract class AbstractControllerTest<
         getPatchInvalidValuesTestParameters().forEach( this::doPatchInvalidValuesTestParameters );
     }
 
-    private void doPatchInvalidValuesTestParameters(Map<String, Object> requestedMap, List<Pair<String, Object>> valueProviders) {
+    private void doPatchInvalidValuesTestParameters(Map<String, Object> requestedMap, Pair<String, Object> valueProvider) {
         Entity entity = getNewEntity();
         whenGetEntity( any( Long.class ), entity );
 
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
-
-        valueProviders.forEach( valueProvider -> {
-
-            try {
-                mockMvc.perform( patch( getControllerPath() + "/{id}", entity.getId() )
-                                .content( getJson(requestedMap) )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON))
-                        .andDo(print())
-                        .andExpect( jsonPath("$." + valueProvider.getFirst())
-                                .value(valueProvider.getSecond()) )
-                        .andExpect( status().isNotAcceptable() );
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        });
+        try {
+            mockMvc.perform( patch( getControllerPath() + "/{id}", entity.getId() )
+                            .content( getJson(requestedMap) )
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect( jsonPath("$." + valueProvider.getFirst())
+                            .value(valueProvider.getSecond()) )
+                    .andExpect( status().isNotAcceptable() );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -343,7 +336,7 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
-    protected abstract Map< Map<String, Object>, List< Pair<Function<Entity, Object>, Object> > > getPatchValuesTestParameters();
+    protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Object> > getPatchValuesTestParameters();
 
-    protected abstract Map< Map<String, Object>, List< Pair<String, Object> > > getPatchInvalidValuesTestParameters();
+    protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
 }
