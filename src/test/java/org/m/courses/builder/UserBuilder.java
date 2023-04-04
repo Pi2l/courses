@@ -37,7 +37,7 @@ public class UserBuilder {
 
     // Spring based
     public User toDB() {
-        return userDao.create( buildNew() ).get();
+        return userDao.create( buildNew() );
     }
 
     private UserBuilder initDefaultUser() {
