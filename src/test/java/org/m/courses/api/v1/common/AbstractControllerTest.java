@@ -6,31 +6,35 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
-import org.m.courses.api.v1.controller.user.UserRequest;
+import org.m.courses.api.v1.controller.common.PageResponse;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
-import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -87,23 +91,6 @@ public abstract class AbstractControllerTest<
         mockMvc.perform( get( getControllerPath() + "/{id}", entity.getId() )
                         .accept( MediaType.APPLICATION_JSON ))
                 .andExpect( status().isNotFound() );
-    }
-
-    @Test
-    void getAllEntitiesTest() throws Exception {
-        List<Entity> entities = List.of(getNewEntity(), getNewEntity());
-
-        when( getService().getAll() )
-                .thenReturn( entities );
-
-        List<Response> expectedResponse = entities.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-
-        mockMvc.perform( get( getControllerPath() )
-                        .accept( MediaType.APPLICATION_JSON ) )
-                .andExpect( status().isOk() )
-                .andExpect( content().json( getJson(expectedResponse) ) );
     }
 
     @Test
@@ -368,6 +355,91 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
+    public void getAllTest() throws Exception {
+        List<Entity> entities = new LinkedList<>( Arrays.asList( getNewEntity(), getNewEntity() ) );
+
+        Page<Entity> page = mockPage( entities );
+
+        List<Response> expectedResponse = entities.stream().map( this :: convertToResponse ).collect( Collectors.toList() );
+
+        PageResponse< Response > expectedResponses = new PageResponse<>(expectedResponse, page.getTotalElements(), page.getNumber(), page.getSize());
+        mockMvc.perform( get( getControllerPath() )
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( status().isOk() )
+                .andExpect( content().json( getJson( expectedResponses ) ) );
+    }
+
+    @Test
+    public void getAllWithDefaultPageValuesTest() throws Exception {
+        mockPage( List.of() );
+
+        mockMvc.perform( get( getControllerPath() )
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( status().isOk() );
+
+        Pageable captor = getPageableArgumentCaptorValue();
+
+        assertEquals(0, captor.getPageNumber());
+        assertEquals(30, captor.getPageSize());
+    }
+
+    @Test
+    public void getAllWithCustomPageValuesTest() throws Exception {
+        mockPage( List.of() );
+
+        mockMvc.perform( get( getControllerPath() )
+                        .param("index", "7")
+                        .param("size", "20")
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( status().isOk() );
+
+        Pageable pageable = getPageableArgumentCaptorValue();
+
+        assertEquals(7, pageable.getPageNumber());
+        assertEquals(20, pageable.getPageSize());
+    }
+
+    @Test
+    public void getAllWithSortingTest() {
+        mockPage(List.of());
+
+        getSortingTestParams().forEach( this::doSortingParamTest );
+    }
+
+    private void doSortingParamTest(List<String> sortingValues, Sort expectedSort) {
+        MockHttpServletRequestBuilder mockHttpServletRequestBuilder = get( getControllerPath() );
+        sortingValues.forEach( value -> mockHttpServletRequestBuilder.param( "sort", value ));
+
+        try {
+            mockMvc.perform(mockHttpServletRequestBuilder)
+                    .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail();
+        }
+
+        Pageable pageable = getPageableArgumentCaptorValue();
+        assertEquals( expectedSort, pageable.getSort() );
+    }
+
+    private Pageable getPageableArgumentCaptorValue() {
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass( Pageable.class );
+        verify( getService(), atLeastOnce() ).getAll( captor.capture() );
+        return captor.getValue();
+    }
+
+    private Page<Entity> mockPage( List< Entity > entities ) {
+        Page<Entity> page = mock(Page.class);
+        when( page.getContent()).thenReturn(entities);
+        when( page.getTotalElements() ).thenReturn( 423L );
+        when( page.getNumber() ).thenReturn( 1 );
+        when( page.getSize() ).thenReturn( 5 );
+        when( page.iterator() ).thenReturn( entities.iterator() );
+
+        when( getService().getAll( any(Pageable.class) ) ).thenReturn(page);
+        return page;
+    }
+
+    @Test
     void deleteEntityTest() throws Exception {
         Entity entity = getNewEntity();
 
@@ -414,5 +486,7 @@ public abstract class AbstractControllerTest<
     protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters();
 
     protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getUpdateWithOptionalValuesTestParameters();
+
+    protected abstract Map< List<String>, Sort> getSortingTestParams();
 
 }

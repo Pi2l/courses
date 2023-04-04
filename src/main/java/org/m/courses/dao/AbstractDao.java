@@ -4,6 +4,8 @@ import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Identity;
 import org.m.courses.repository.PrimaryRepository;
 import org.m.courses.service.UserAuthorizationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -26,6 +28,10 @@ public abstract class AbstractDao<T extends Identity<Long>> {
 
     public List<T> getAll() {
         return getRepository().findAll();
+    }
+
+    public Page<T> getAll(Pageable pageable) {
+        return getRepository().findAll( pageable );
     }
 
     public T get(Long id) {

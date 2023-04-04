@@ -10,6 +10,7 @@ import org.m.courses.model.User;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 
 import java.util.ArrayList;
@@ -32,16 +33,6 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
 
     @MockBean
     private UserService userService;
-
-    @Test
-    void getTest() throws Exception {
-        when(userService.get( anyLong() ))
-                .thenReturn( UserBuilder.builder().buildNew() );
-
-        mockMvc.perform(get( getControllerPath() ))
-                .andDo(print())
-                .andExpect( status().isOk() );
-    }
 
     @Override
     protected String getControllerPath() {
@@ -147,7 +138,7 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Override
     protected Map<Consumer<UserRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
         Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
-
+// TODO: password optional within update?
         setupWrongValues(wrongValues);
 
         return wrongValues;
@@ -258,6 +249,28 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Override
     protected Map<Consumer<UserRequest>, Pair<Function<User, Object>, Object>> getUpdateWithOptionalValuesTestParameters() {
         return getCreateWithOptionalValuesTestParameters();
+    }
+
+    @Override
+    protected Map< List<String>, Sort > getSortingTestParams() {
+        Map< List<String>, Sort > map = new HashMap<>();
+
+        map.put( List.of("firstName"), Sort.by(Sort.Direction.ASC, "firstName") );
+        map.put( List.of("firstName,desc"), Sort.by(Sort.Direction.DESC, "firstName") );
+
+        map.put( List.of("latName"), Sort.by(Sort.Direction.ASC, "latName") );
+        map.put( List.of("latName,desc"), Sort.by(Sort.Direction.DESC, "latName") );
+
+        map.put( List.of("phoneNumber"), Sort.by(Sort.Direction.ASC, "phoneNumber") );
+        map.put( List.of("phoneNumber,desc"), Sort.by(Sort.Direction.DESC, "phoneNumber") );
+        
+        map.put( List.of("login"), Sort.by(Sort.Direction.ASC, "login") );
+        map.put( List.of("login,desc"), Sort.by(Sort.Direction.DESC, "login") );
+
+        map.put( List.of("role"), Sort.by(Sort.Direction.ASC, "role") );
+        map.put( List.of("role,desc"), Sort.by(Sort.Direction.DESC, "role") );
+
+        return map;
     }
 
     @Override

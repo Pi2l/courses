@@ -1,14 +1,21 @@
 package org.m.courses.api.v1.controller.common;
 
 
+import org.hibernate.validator.constraints.Range;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.PositiveOrZero;
 import javax.validation.groups.Default;
+import javax.websocket.server.PathParam;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,12 +27,19 @@ public abstract class AbstractController<
         > {
 
     @GetMapping
-    public List<Response> getAll() {
-        List<Entity> entities = getService().getAll();
+    public PageResponse<Response> getAll(
+            @RequestParam(defaultValue = "0", required = false) @PositiveOrZero Integer index,
+            @RequestParam(defaultValue = "30", required = false) @Range(max = 100) Integer size,
+            @PathParam(value = "sort") Sort sort
+            ) {
+        sort = mapSortProperties( sort );
 
-        return entities.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(index, size, sort);
+        Page<Entity> entityPage = getService().getAll( pageable );
+        List<Response> responses = entityPage.getContent().stream()
+                .map( this::convertToResponse ).collect(Collectors.toList());
+
+        return new PageResponse<>(responses, entityPage.getTotalElements(), entityPage.getNumber(), entityPage.getSize());
     }
 
     @GetMapping("/{id}")
@@ -88,6 +102,14 @@ public abstract class AbstractController<
 
     protected Entity createEntity(Entity entity) {
         return getService().create( entity );
+    }
+
+    protected Sort mapSortProperties(Sort sort ) {
+        if ( sort == null ) {
+            return Sort.unsorted();
+        }
+
+        return sort;
     }
 
     protected abstract Response convertToResponse(Entity entity);

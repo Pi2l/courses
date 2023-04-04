@@ -6,6 +6,8 @@ import org.m.courses.model.User;
 import org.m.courses.repository.PrimaryRepository;
 import org.m.courses.repository.UserRepository;
 import org.m.courses.service.UserAuthorizationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,11 @@ public class UserDao extends AbstractDao<User> {
     @Override
     public List<User> getAll() {
         return getRepository().findAll( buildReadOnlySpec() );
+    }
+
+    @Override
+    public Page<User> getAll(Pageable pageable) {
+        return getRepository().findAll( buildReadOnlySpec(), pageable );
     }
 
     public User get(Long id) {
