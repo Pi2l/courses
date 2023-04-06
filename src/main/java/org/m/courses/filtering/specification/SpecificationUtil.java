@@ -1,4 +1,4 @@
-package org.m.courses.dao.specification;
+package org.m.courses.filtering.specification;
 
 import org.springframework.data.jpa.domain.Specification;
 

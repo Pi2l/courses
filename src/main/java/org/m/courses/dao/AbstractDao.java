@@ -10,7 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
-import static org.m.courses.dao.specification.SpecificationUtil.buildEqualSpec;
+import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
 
 public abstract class AbstractDao<T extends Identity<Long>> {
 
@@ -30,8 +30,8 @@ public abstract class AbstractDao<T extends Identity<Long>> {
         return getRepository().findAll();
     }
 
-    public Page<T> getAll(Pageable pageable) {
-        return getRepository().findAll( pageable );
+    public Page<T> getAll(Pageable pageable, Specification<T> filter) {
+        return getRepository().findAll( filter, pageable );
     }
 
     public T get(Long id) {

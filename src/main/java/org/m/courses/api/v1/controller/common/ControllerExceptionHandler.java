@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.common;
 
+import org.m.courses.exception.IllegalFilteringOperationException;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
 import org.m.courses.exception.UniqueFieldViolationException;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +49,14 @@ public class ControllerExceptionHandler {
         return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
     }
 
+    @ExceptionHandler(IllegalFilteringOperationException.class)
+    ResponseEntity<Object> handlerValidationException(IllegalFilteringOperationException exception) {
+        Map<String, String> validationErrorsMap = new HashMap<>();
+
+        validationErrorsMap.put("filtering", exception.getMessage());
+
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+    }
     @ExceptionHandler(PatchFieldValidationException.class)
     ResponseEntity<Object> handlerPatchValidationException(PatchFieldValidationException exception) {
         Set<? extends ConstraintViolation<?>> validationErrorsSet = exception.getValidationViolations();

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
-import static org.m.courses.dao.specification.SpecificationUtil.buildEqualSpec;
+import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
 import static org.springframework.data.jpa.domain.Specification.not;
 import static org.springframework.data.jpa.domain.Specification.where;
 
@@ -34,8 +34,8 @@ public class UserDao extends AbstractDao<User> {
     }
 
     @Override
-    public Page<User> getAll(Pageable pageable) {
-        return getRepository().findAll( buildReadOnlySpec(), pageable );
+    public Page<User> getAll(Pageable pageable, Specification<User> filter) {
+        return getRepository().findAll( filter.and( buildReadOnlySpec() ), pageable );
     }
 
     public User get(Long id) {

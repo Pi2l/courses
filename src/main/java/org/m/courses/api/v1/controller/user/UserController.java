@@ -4,6 +4,8 @@ import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.PatchFieldValidationException;
 import org.m.courses.exception.UniqueFieldViolationException;
+import org.m.courses.filtering.EntitySpecificationsBuilder;
+import org.m.courses.filtering.UserSpecificationsBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 import java.util.Map;
@@ -30,10 +31,13 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
 
     private final ConversionService conversionService;
 
-    public UserController(UserService userService, ConversionService conversionService, Validator validator) {
+    private final UserSpecificationsBuilder userSpecificationsBuilder;
+
+    public UserController(UserService userService, ConversionService conversionService, Validator validator, UserSpecificationsBuilder userSpecificationsBuilder) {
         this.userService = userService;
         this.validator = validator;
         this.conversionService = conversionService;
+        this.userSpecificationsBuilder = userSpecificationsBuilder;
     }
 
     @Override
@@ -107,11 +111,21 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     }
 
     @Override
+    protected EntitySpecificationsBuilder<User> getSpecificationBuilder() {
+        return userSpecificationsBuilder;
+    }
+
+    @Override
     protected User createEntity(User entity) {
         if (userService.isUnique( entity )) {
             return getService().create(entity);
         }
         throw new UniqueFieldViolationException("login");
+    }
+
+    @Override
+    protected ConversionService getConversionService() {
+        return conversionService;
     }
 
     @Override

@@ -8,6 +8,9 @@ import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.api.v1.controller.common.PageResponse;
 import org.m.courses.exception.ItemNotFoundException;
+import org.m.courses.filtering.EntitySpecificationsBuilder;
+import org.m.courses.filtering.FilterableProperty;
+import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
 import org.mockito.ArgumentCaptor;
@@ -17,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,10 +29,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -421,10 +422,86 @@ public abstract class AbstractControllerTest<
         assertEquals( expectedSort, pageable.getSort() );
     }
 
+    @Test
+    public void getAllWithFilteringTest() {
+        mockPage(List.of());
+
+        getFilteringTestParams().forEach( this::doFilteringParamTest );
+    }
+
+    private void doFilteringParamTest(List<String> filter, Pair< List<FilterableProperty<Entity>>, List<SearchCriteria> > providedValues) {
+        MockHttpServletRequestBuilder mockHttpServletRequestBuilder = get( getControllerPath() );
+        filter.forEach( value -> mockHttpServletRequestBuilder.param( "filter", value ));
+
+        mockSpecificationBuilder( providedValues.getFirst() );
+
+        try {
+            mockMvc.perform(mockHttpServletRequestBuilder)
+                    .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail();
+        }
+
+        Specification<Entity> specificationArgumentCaptor = getSpecificationArgumentCaptorValue();
+        assertNotNull( specificationArgumentCaptor );
+
+        List<SearchCriteria> searchCriteria = getSearchCriteriaArgumentCaptorValue();
+        List<SearchCriteria> providedCriteria = providedValues.getSecond();
+
+        assertEquals( searchCriteria.size(), providedCriteria.size() );
+
+        searchCriteria.forEach( criteria -> assertEqualsCriteria(providedCriteria, criteria ));
+    }
+
+    @Test
+    public void getAllWithInvalidFilteringTest() {
+        mockPage(List.of());
+
+        getInvalidFilteringTestParams().forEach( this::doInvalidFilteringParamTest );
+    }
+
+    private void doInvalidFilteringParamTest(String filter, Pair< FilterableProperty<Entity>, String > providedValues) {
+
+        mockSpecificationBuilder( List.of( providedValues.getFirst() ) );
+
+        try {
+            mockMvc.perform( get( getControllerPath() )
+                            .param("filter", filter) )
+
+                    .andExpect(jsonPath("$.filtering").value( providedValues.getSecond() ))
+                    .andExpect(status().isNotAcceptable());
+        } catch (Exception e) {
+            fail();
+        }
+    }
+
+    private void assertEqualsCriteria(List<SearchCriteria> providedSearchCriteria, SearchCriteria criteria) {
+        Optional<SearchCriteria> providedCriteria = providedSearchCriteria.stream().filter(providedCriteria1 -> providedCriteria1.equals( criteria ) ).findFirst();
+        assertTrue( providedCriteria.isPresent() );
+    }
+
     private Pageable getPageableArgumentCaptorValue() {
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass( Pageable.class );
-        verify( getService(), atLeastOnce() ).getAll( captor.capture() );
+        verify( getService(), atLeastOnce() ).getAll( captor.capture(), any() );
         return captor.getValue();
+    }
+
+    private List<SearchCriteria> getSearchCriteriaArgumentCaptorValue() {
+        ArgumentCaptor< List<SearchCriteria> > captor = ArgumentCaptor.forClass( List.class );
+
+        verify( getEntitySpecificationsBuilder(), atLeastOnce() ).buildSpecification( captor.capture() );
+        return captor.getValue();
+    }
+
+    private Specification<Entity> getSpecificationArgumentCaptorValue() {
+        ArgumentCaptor< Specification<Entity> > specificationArgumentCaptor = ArgumentCaptor.forClass( Specification.class );
+        verify( getService(), atLeastOnce() ).getAll( any(), specificationArgumentCaptor.capture() );
+        return specificationArgumentCaptor.getValue();
+    }
+
+    private void mockSpecificationBuilder(List< FilterableProperty<Entity> > filterableProperties) {
+        doReturn(filterableProperties)
+                .when( getEntitySpecificationsBuilder() ).getFilterableProperties();
     }
 
     private Page<Entity> mockPage( List< Entity > entities ) {
@@ -435,7 +512,7 @@ public abstract class AbstractControllerTest<
         when( page.getSize() ).thenReturn( 5 );
         when( page.iterator() ).thenReturn( entities.iterator() );
 
-        when( getService().getAll( any(Pageable.class) ) ).thenReturn(page);
+        when( getService().getAll( any(Pageable.class), any() ) ).thenReturn(page);
         return page;
     }
 
@@ -489,4 +566,9 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< List<String>, Sort> getSortingTestParams();
 
+    protected abstract Map< List<String>, Pair< List< FilterableProperty<Entity> >, List<SearchCriteria> > > getFilteringTestParams();
+
+    protected abstract Map< String, Pair< FilterableProperty<Entity>, String > > getInvalidFilteringTestParams();
+
+    protected abstract EntitySpecificationsBuilder<Entity> getEntitySpecificationsBuilder();
 }

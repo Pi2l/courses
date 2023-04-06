@@ -4,6 +4,7 @@ import org.m.courses.dao.AbstractDao;
 import org.m.courses.model.Identity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
@@ -15,8 +16,8 @@ public abstract class AbstractService<T extends Identity<Long>> {
         return getDao().getAll();
     }
 
-    public Page<T> getAll(Pageable pageable) {
-        return getDao().getAll( pageable );
+    public Page<T> getAll(Pageable pageable, Specification<T> filter) {
+        return getDao().getAll( pageable, filter );
     }
 
     public T get(Long id) {

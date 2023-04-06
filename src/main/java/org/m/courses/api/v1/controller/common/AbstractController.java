@@ -1,23 +1,36 @@
 package org.m.courses.api.v1.controller.common;
 
 
+import ch.qos.logback.classic.util.LevelToSyslogSeverity;
 import org.hibernate.validator.constraints.Range;
+import org.m.courses.exception.IllegalFilteringOperationException;
 import org.m.courses.exception.ItemNotFoundException;
+import org.m.courses.filtering.EntitySpecificationsBuilder;
+import org.m.courses.filtering.FilterableProperty;
+import org.m.courses.filtering.FilteringOperation;
+import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.groups.Default;
 import javax.websocket.server.PathParam;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class AbstractController<
@@ -26,16 +39,24 @@ public abstract class AbstractController<
         Response extends AbstractResponse
         > {
 
+    private static final Pattern PATTERN = Pattern.compile("(\\w+?)(:|!_=|[!<>_]=?|=)(.*)");
+
     @GetMapping
     public PageResponse<Response> getAll(
             @RequestParam(defaultValue = "0", required = false) @PositiveOrZero Integer index,
             @RequestParam(defaultValue = "30", required = false) @Range(max = 100) Integer size,
-            @PathParam(value = "sort") Sort sort
+            @PathParam(value = "sort") Sort sort,
+            @PathParam(value = "filter") String filter
             ) {
         sort = mapSortProperties( sort );
 
+        Specification<Entity> specification = null;
+        if (filter != null) {
+            specification = getSpecificationFromFilter(filter);
+        }
+
         Pageable pageable = PageRequest.of(index, size, sort);
-        Page<Entity> entityPage = getService().getAll( pageable );
+        Page<Entity> entityPage = getService().getAll( pageable, specification );
         List<Response> responses = entityPage.getContent().stream()
                 .map( this::convertToResponse ).collect(Collectors.toList());
 
@@ -111,6 +132,50 @@ public abstract class AbstractController<
 
         return sort;
     }
+
+    protected Specification<Entity> getSpecificationFromFilter(String filter) {
+        String [] filtersByField = filter.split(",");
+        List<SearchCriteria> searchCriteria = new ArrayList<>();
+        EntitySpecificationsBuilder<Entity> specificationsBuilder = getSpecificationBuilder();
+
+        for (String filterByField : filtersByField) {
+            Matcher matcher = PATTERN.matcher(filterByField);
+            while (matcher.find()) {
+                String key = matcher.group(1);
+                String operationStr = matcher.group(2);
+                FilteringOperation operation = FilteringOperation.fromString(operationStr);
+                String value = matcher.group(3);
+
+                Optional< FilterableProperty< Entity > > filterableProperty =
+                        specificationsBuilder.getFilterableProperties().stream()
+                            .filter( property -> property.getPropertyName().equals( key ) ).findFirst();
+
+                if (filterableProperty.isPresent()) {
+                    if (!filterableProperty.get().getSupportedOperations().contains(operation)) {
+                        throw new IllegalFilteringOperationException("Operation '" + operation + "' is not supported for property " + key);
+                    }
+
+                    Object convertedValue;
+                    if ("null".equals(value) || (value != null && value.isBlank())) {
+                        convertedValue = null;
+                    } else {
+                        convertedValue = convertValueForCriteria( value, filterableProperty.get() );
+                    }
+
+                    searchCriteria.add(new SearchCriteria(key, operation, convertedValue));
+                }
+            }
+        }
+        return specificationsBuilder.buildSpecification(searchCriteria);
+    }
+
+    protected Object convertValueForCriteria( String value, FilterableProperty< Entity > filterableProperty ) {
+        return getConversionService().convert( value, filterableProperty.getExpectedType() );
+    }
+
+    protected abstract ConversionService getConversionService();
+
+    protected abstract EntitySpecificationsBuilder<Entity> getSpecificationBuilder();
 
     protected abstract Response convertToResponse(Entity entity);
 
