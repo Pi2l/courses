@@ -35,7 +35,7 @@ public class UserDao extends AbstractDao<User> {
 
     @Override
     public Page<User> getAll(Pageable pageable, Specification<User> filter) {
-        return getRepository().findAll( filter.and( buildReadOnlySpec() ), pageable );
+        return getRepository().findAll( buildReadOnlySpec().and( filter ), pageable );
     }
 
     public User get(Long id) {

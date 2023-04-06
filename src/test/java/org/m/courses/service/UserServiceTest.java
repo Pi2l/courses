@@ -4,11 +4,15 @@ import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.exception.AccessDeniedException;
-import org.m.courses.exception.ItemNotFoundException;
+import org.m.courses.filtering.FilteringOperation;
+import org.m.courses.filtering.SearchCriteria;
+import org.m.courses.filtering.specification.EqualSpecificationBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -47,6 +51,45 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
         AuthManager.loginAs( user );
         assertEquals( 2, userService.getAll().size());
+    }
+
+    @Test
+    void getPageAsAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        userService.create( userBuilder.buildNew() );
+
+        Page<User> result = userService.getAll(Pageable.unpaged(), null);
+        assertEquals( 3, result.getTotalElements());
+        assertEquals( 3, result.getContent().size());
+    }
+
+    @Test
+    void getPageAsNotAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        User user = userService.create( userBuilder.buildNew() );
+
+        AuthManager.loginAs( user );
+        Page<User> result = userService.getAll(Pageable.unpaged(), null);
+        assertEquals( 2, result.getTotalElements());
+        assertEquals( 2, result.getContent().size());
+        assertFalse( result.getContent().stream().anyMatch( item -> Role.ADMIN.equals(item.getRole())));
+    }
+
+    @Test
+    void getAdminThroughFilterAsNotAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        User user = userService.create( userBuilder.buildNew() );
+
+        AuthManager.loginAs( user );
+        Page<User> result = userService.getAll(Pageable.unpaged(),
+                new EqualSpecificationBuilder<User>().buildSpecification( new SearchCriteria("role", FilteringOperation.NOT_EQUAL, Role.TEACHER) ) );
+
+        assertEquals( 1, result.getTotalElements());
+        assertEquals( 1, result.getContent().size());
+        assertFalse( result.getContent().stream().anyMatch( item -> Role.ADMIN.equals(item.getRole())));
     }
 
     @Test
