@@ -9,7 +9,6 @@ import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.api.v1.controller.common.PageResponse;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
-import org.m.courses.filtering.FilterableProperty;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Identity;
 import org.m.courses.service.AbstractService;
@@ -401,6 +400,27 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
+    public void getAllWithCustomInvalidPageValuesTest() throws Exception {
+        mockPage( List.of() );
+
+        mockMvc.perform( get( getControllerPath() )
+                        .param("index", "-1")
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( jsonPath("$.['getAll.index']").value("must be greater than or equal to 0") )
+                .andExpect( status().isNotAcceptable() );
+        mockMvc.perform( get( getControllerPath() )
+                        .param("size", "-1")
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( jsonPath("$.['getAll.size']").value("must be between 0 and 100") )
+                .andExpect( status().isNotAcceptable() );
+        mockMvc.perform( get( getControllerPath() )
+                        .param("size", "101")
+                        .accept( MediaType.APPLICATION_JSON_VALUE ) )
+                .andExpect( jsonPath("$.['getAll.size']").value("must be between 0 and 100") )
+                .andExpect( status().isNotAcceptable() );
+    }
+
+    @Test
     public void getAllWithSortingTest() {
         mockPage(List.of());
 
@@ -429,11 +449,9 @@ public abstract class AbstractControllerTest<
         getFilteringTestParams().forEach( this::doFilteringParamTest );
     }
 
-    private void doFilteringParamTest(List<String> filter, Pair< List<FilterableProperty<Entity>>, List<SearchCriteria> > providedValues) {
+    private void doFilteringParamTest(List<String> filter, List<SearchCriteria> providedCriteria) {
         MockHttpServletRequestBuilder mockHttpServletRequestBuilder = get( getControllerPath() );
         filter.forEach( value -> mockHttpServletRequestBuilder.param( "filter", value ));
-
-        mockSpecificationBuilder( providedValues.getFirst() );
 
         try {
             mockMvc.perform(mockHttpServletRequestBuilder)
@@ -446,7 +464,6 @@ public abstract class AbstractControllerTest<
         assertNotNull( specificationArgumentCaptor );
 
         List<SearchCriteria> searchCriteria = getSearchCriteriaArgumentCaptorValue();
-        List<SearchCriteria> providedCriteria = providedValues.getSecond();
 
         assertEquals( searchCriteria.size(), providedCriteria.size() );
 
@@ -460,19 +477,21 @@ public abstract class AbstractControllerTest<
         getInvalidFilteringTestParams().forEach( this::doInvalidFilteringParamTest );
     }
 
-    private void doInvalidFilteringParamTest(String filter, Pair< FilterableProperty<Entity>, String > providedValues) {
-
-        mockSpecificationBuilder( List.of( providedValues.getFirst() ) );
+    private void doInvalidFilteringParamTest(String filter, String providedValues) {
 
         try {
             mockMvc.perform( get( getControllerPath() )
                             .param("filter", filter) )
-
-                    .andExpect(jsonPath("$.filtering").value( providedValues.getSecond() ))
-                    .andExpect(status().isNotAcceptable());
+                    .andExpect(status().isOk());
         } catch (Exception e) {
             fail();
         }
+
+        Specification<Entity> spec = getSpecificationArgumentCaptorValue();
+        assertNull( spec );
+        
+        List<SearchCriteria> criteriaList = getSearchCriteriaArgumentCaptorValue();
+        assertTrue( criteriaList.size() == 0 );
     }
 
     private void assertEqualsCriteria(List<SearchCriteria> providedSearchCriteria, SearchCriteria criteria) {
@@ -497,11 +516,6 @@ public abstract class AbstractControllerTest<
         ArgumentCaptor< Specification<Entity> > specificationArgumentCaptor = ArgumentCaptor.forClass( Specification.class );
         verify( getService(), atLeastOnce() ).getAll( any(), specificationArgumentCaptor.capture() );
         return specificationArgumentCaptor.getValue();
-    }
-
-    private void mockSpecificationBuilder(List< FilterableProperty<Entity> > filterableProperties) {
-        doReturn(filterableProperties)
-                .when( getEntitySpecificationsBuilder() ).getFilterableProperties();
     }
 
     private Page<Entity> mockPage( List< Entity > entities ) {
@@ -560,15 +574,19 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
 
-    protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters();
+    protected Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters() {
+        return new HashMap<>();
+    }
 
-    protected abstract Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getUpdateWithOptionalValuesTestParameters();
+    protected Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getUpdateWithOptionalValuesTestParameters() {
+        return new HashMap<>();
+    }
 
     protected abstract Map< List<String>, Sort> getSortingTestParams();
 
-    protected abstract Map< List<String>, Pair< List< FilterableProperty<Entity> >, List<SearchCriteria> > > getFilteringTestParams();
+    protected abstract Map< List<String>, List<SearchCriteria> > getFilteringTestParams();
 
-    protected abstract Map< String, Pair< FilterableProperty<Entity>, String > > getInvalidFilteringTestParams();
+    protected abstract Map< String, String > getInvalidFilteringTestParams();
 
     protected abstract EntitySpecificationsBuilder<Entity> getEntitySpecificationsBuilder();
 }

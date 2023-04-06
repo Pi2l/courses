@@ -49,6 +49,12 @@ public class ControllerExceptionHandler {
         return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<Object> handlerValidationException(ConstraintViolationException exception) {
+        Map<String, Object> map = getStringObjectMap(exception.getConstraintViolations());
+        return new ResponseEntity<>(map, HttpStatus.NOT_ACCEPTABLE);
+    }
+
     @ExceptionHandler(IllegalFilteringOperationException.class)
     ResponseEntity<Object> handlerValidationException(IllegalFilteringOperationException exception) {
         Map<String, String> validationErrorsMap = new HashMap<>();
@@ -60,12 +66,17 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(PatchFieldValidationException.class)
     ResponseEntity<Object> handlerPatchValidationException(PatchFieldValidationException exception) {
         Set<? extends ConstraintViolation<?>> validationErrorsSet = exception.getValidationViolations();
+        Map<String, Object> validationErrorsMap = getStringObjectMap(validationErrorsSet);
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    private Map<String, Object> getStringObjectMap(Set<? extends ConstraintViolation<?>> validationErrorsSet) {
         Map<String, Object> validationErrorsMap = new HashMap<>();
 
-        for (ConstraintViolation<?> validationError : validationErrorsSet ) {
+        for (ConstraintViolation<?> validationError : validationErrorsSet) {
             validationErrorsMap.put( validationError.getPropertyPath().toString(), validationError.getMessage());
         }
-        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+        return validationErrorsMap;
     }
 
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)

@@ -5,12 +5,8 @@ import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.builder.UserBuilder;
-import org.m.courses.filtering.EntitySpecificationsBuilder;
-import org.m.courses.filtering.FilterableProperty;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.filtering.UserSpecificationsBuilder;
-import org.m.courses.filtering.specification.EqualSpecificationBuilder;
-import org.m.courses.filtering.specification.SpecificationUtil;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.UserService;
@@ -18,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 
 import java.util.ArrayList;
@@ -282,53 +277,41 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
-    protected Map< List<String>, Pair< List<FilterableProperty<User>>, List<SearchCriteria>> > getFilteringTestParams() {
-        Map< List<String>, Pair< List< FilterableProperty<User> >, List<SearchCriteria> > > map = new HashMap<>();
+    protected Map< List<String>, List<SearchCriteria> > getFilteringTestParams() {
+        Map< List<String>, List<SearchCriteria> > map = new HashMap<>();
 
         map.put(List.of("firstName=firstName1", "firstName!=firstName2"),
-                Pair.of(List.of(
-                            new FilterableProperty<>("firstName", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)) ),
                         List.of(
                             new SearchCriteria("firstName", EQUAL, "firstName1"),
-                            new SearchCriteria("firstName", NOT_EQUAL, "firstName2") ) ) );
+                            new SearchCriteria("firstName", NOT_EQUAL, "firstName2") ) );
 
         map.put(List.of("lastName=lastName1", "lastName!=lastName2"),
-                Pair.of(List.of(
-                            new FilterableProperty<>("lastName", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)) ),
                         List.of(
                             new SearchCriteria("lastName", EQUAL, "lastName1"),
-                            new SearchCriteria("lastName", NOT_EQUAL, "lastName2") ) ) );
+                            new SearchCriteria("lastName", NOT_EQUAL, "lastName2") ) );
 
         map.put(List.of("phoneNumber=phoneNumber1", "phoneNumber!=phoneNumber2"),
-                Pair.of(List.of(
-                            new FilterableProperty<>("phoneNumber", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)) ),
                         List.of(
                             new SearchCriteria("phoneNumber", EQUAL, "phoneNumber1"),
-                            new SearchCriteria("phoneNumber", NOT_EQUAL, "phoneNumber2") ) ) );
+                            new SearchCriteria("phoneNumber", NOT_EQUAL, "phoneNumber2") ) );
 
         map.put(List.of("login=login1", "login!=login2"),
-                Pair.of(List.of(
-                            new FilterableProperty<>("login", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)) ),
                         List.of(
                             new SearchCriteria("login", EQUAL, "login1"),
-                            new SearchCriteria("login", NOT_EQUAL, "login2") ) ) );
+                            new SearchCriteria("login", NOT_EQUAL, "login2") ) );
 
         map.put(List.of("role=USER", "role!=ADMIN"),
-                Pair.of(List.of(
-                                new FilterableProperty<>("role", new EqualSpecificationBuilder<>(), Role.class, List.of(EQUAL, NOT_EQUAL)) ),
                         List.of(
-                                new SearchCriteria("role", EQUAL, Role.USER),
-                                new SearchCriteria("role", NOT_EQUAL, Role.ADMIN) ) ) );
+                            new SearchCriteria("role", EQUAL, Role.USER),
+                            new SearchCriteria("role", NOT_EQUAL, Role.ADMIN) ) );
         return map;
     }
 
     @Override
-    protected Map< String, Pair< FilterableProperty<User>, String > > getInvalidFilteringTestParams() {
-        Map< String, Pair< FilterableProperty<User>, String > > map = new HashMap<>();
+    protected Map< String, String > getInvalidFilteringTestParams() {
+        Map< String, String > map = new HashMap<>();
 
-        map.put("firstName=firstName1",
-                Pair.of( new FilterableProperty<>("firstName", new EqualSpecificationBuilder<>(), String.class, List.of() ),
-                        "Operation 'EQUAL' is not supported for property firstName") );
+        map.put("fn=firstName1", "Operation 'EQUAL' is not supported for property firstName");
 
         return map;
     }

@@ -1,7 +1,6 @@
 package org.m.courses.api.v1.controller.common;
 
 
-import ch.qos.logback.classic.util.LevelToSyslogSeverity;
 import org.hibernate.validator.constraints.Range;
 import org.m.courses.exception.IllegalFilteringOperationException;
 import org.m.courses.exception.ItemNotFoundException;
@@ -18,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Validated
 public abstract class AbstractController<
         Entity extends Identity<Long>,
         Request extends AbstractRequest<Entity>,
