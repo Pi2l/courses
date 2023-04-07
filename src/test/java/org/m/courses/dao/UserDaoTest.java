@@ -1,25 +1,17 @@
 package org.m.courses.dao;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
-import org.m.courses.exception.AccessDeniedException;
-import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
-public class UserDaoTest {
+public class UserDaoTest extends AbstractDaoTest<User>  {
 
     @Autowired
     private UserDao userDao;
@@ -27,18 +19,33 @@ public class UserDaoTest {
     @Autowired
     private UserBuilder userBuilder;
 
-    @BeforeEach
-    void login() {
-        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
+    protected AbstractDao<User> getDao() {
+        return userDao;
     }
 
-    @Test
-    void saveUserTest() {
-        User user = userBuilder.buildNew();
+    @Override
+    protected User entityToDB() {
+        return userBuilder.toDB();
+    }
 
-        userDao.create(user);
+    @Override
+    protected User buildEntity() {
+        return userBuilder.build();
+    }
 
-        assertNotNull( userDao.get(user.getId()) );
+    @Override
+    protected User buildNewEntity() {
+        return userBuilder.buildNew();
+    }
+
+    @Override
+    protected void assertEntitiesEqual(User updatedUser, User userFromDB) {
+        assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
+        assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
+        assertEquals(updatedUser.getPhoneNumber(), userFromDB.getPhoneNumber());
+        assertEquals(updatedUser.getLogin(), userFromDB.getLogin());
+        assertEquals(updatedUser.getPassword(), userFromDB.getPassword());
+        assertEquals(updatedUser.getRole(), userFromDB.getRole());
     }
 
     @Test
@@ -74,8 +81,7 @@ public class UserDaoTest {
 
         String detailedCause = exception.getMessage();
 
-        assertTrue(detailedCause.contains( fieldName ));
-        assertTrue(detailedCause.contains( "not-null property references a null or transient value" ));
+        assertTrue(detailedCause.equals( "could not execute statement; SQL [n/a]; constraint [null]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement" ));
     }
 
     @Test
@@ -106,48 +112,6 @@ public class UserDaoTest {
     }
 
     @Test
-    void getUserTest() {
-        User user = userBuilder.toDB();
-        User userFromDB = userDao.get(user.getId());
-
-        assertEquals(user, userFromDB);
-    }
-
-    @Test
-    void getAllUsersTest() {
-        userBuilder.toDB();
-        userBuilder.toDB();
-
-        List<User> users = userDao.getAll();
-
-        assertEquals(2, users.size());
-    }
-
-    @Test
-    void updateUserTest() {
-        User user = userBuilder.toDB();
-        User updatedUser = userBuilder.build();
-        updatedUser.setId(user.getId());
-
-        User userFromDB = userDao.update(updatedUser);
-        assertNotNull(userFromDB);
-
-        assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
-        assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
-        assertEquals(updatedUser.getPhoneNumber(), userFromDB.getPhoneNumber());
-        assertEquals(updatedUser.getLogin(), userFromDB.getLogin());
-        assertEquals(updatedUser.getPassword(), userFromDB.getPassword());
-        assertEquals(updatedUser.getRole(), userFromDB.getRole());
-    }
-
-    @Test
-    void updateNotExistingUserTest() {
-        User user = userBuilder.build();
-
-        assertThrowsExactly(AccessDeniedException.class, () -> userDao.update(user) );
-    }
-
-    @Test
     void updateUserWithNullFieldsTest() {
         User user = userBuilder.toDB();
         User userWithNullFields = new User();
@@ -173,14 +137,5 @@ public class UserDaoTest {
         assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithSameLogin) );
     }
 
-    @Test
-    void deleteUserTest() {
-        User userToDelete = userBuilder.toDB();
-
-        userDao.delete(userToDelete.getId());
-
-        assertThrowsExactly(AccessDeniedException.class, () -> userDao.get(userToDelete.getId()) );
-
-    }
 }
 

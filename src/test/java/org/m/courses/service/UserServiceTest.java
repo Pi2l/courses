@@ -1,20 +1,25 @@
 package org.m.courses.service;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.filtering.FilteringOperation;
+import org.m.courses.filtering.SearchCriteria;
+import org.m.courses.filtering.specification.EqualSpecificationBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class UserServiceTest {
+public class UserServiceTest extends AbstractServiceTest<User> {
 
     @Autowired
     private UserService userService;
@@ -22,71 +27,8 @@ public class UserServiceTest {
     @Autowired
     private UserBuilder userBuilder;
 
-    @BeforeEach
-    void login() {
-        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
-    }
-
-    @AfterEach
-    void clearDB() {
-        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
-        userService.getAll().forEach(user -> userService.delete( user.getId() ) );
-    }
-
-    @Test
-    void getUserTest() {
-        User user = userBuilder.buildNew();
-        userService.create(user);
-
-        assertNotNull( userService.get( user.getId() ) );
-    }
-
-    @Test
-    void getAllUsersTest() {
-        userService.create( userBuilder.buildNew() );
-        userService.create( userBuilder.buildNew() );
-
-        assertEquals( 2, userService.getAll().size() );
-    }
-
-    @Test
-    void createUserTest() {
-        User user = userBuilder.buildNew();
-
-        User createdUser = userService.create( user );
-
-        assertNotNull( userService.get( user.getId() ) );
-        assertEquals( createdUser, user );
-    }
-
-    @Test
-    void updateUserTest() {
-        User user = userService.create( userBuilder.buildNew() );
-        User updatedUser = userBuilder.setRole(Role.ADMIN).buildNew();
-        updatedUser.setId( user.getId() );
-
-        User userFromDB = userService.update( updatedUser );
-
-        assertEqualsUserFields(updatedUser, userFromDB);
-    }
-
-    private void assertEqualsUserFields(User updatedUser, User userFromDB) {
-        assertEquals(updatedUser.getFirstName(), userFromDB.getFirstName());
-        assertEquals(updatedUser.getLastName(), userFromDB.getLastName());
-        assertEquals(updatedUser.getPhoneNumber(), userFromDB.getPhoneNumber());
-        assertEquals(updatedUser.getLogin(), userFromDB.getLogin());
-        assertEquals(updatedUser.getPassword(), userFromDB.getPassword());
-        assertEquals(updatedUser.getRole(), userFromDB.getRole());
-    }
-
-    @Test
-    void deleteUserTest() {
-        User user = userService.create( userBuilder.buildNew() );
-
-        userService.delete( user.getId() );
-
-        assertThrowsExactly(AccessDeniedException.class, () -> userService.get( user.getId() ));
-    }
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Test
     void getAsNotAdminTest() {
@@ -98,7 +40,7 @@ public class UserServiceTest {
 
         assertNotNull( userService.get( user.getId() ) );
         assertNotNull( userService.get( teacher.getId() ) );
-        assertThrowsExactly(AccessDeniedException.class, () -> userService.get( admin.getId() ) );
+        assertNull( userService.get( admin.getId() ) );
     }
 
     @Test
@@ -112,6 +54,45 @@ public class UserServiceTest {
     }
 
     @Test
+    void getPageAsAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        userService.create( userBuilder.buildNew() );
+
+        Page<User> result = userService.getAll(Pageable.unpaged(), null);
+        assertEquals( 3, result.getTotalElements());
+        assertEquals( 3, result.getContent().size());
+    }
+
+    @Test
+    void getPageAsNotAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        User user = userService.create( userBuilder.buildNew() );
+
+        AuthManager.loginAs( user );
+        Page<User> result = userService.getAll(Pageable.unpaged(), null);
+        assertEquals( 2, result.getTotalElements());
+        assertEquals( 2, result.getContent().size());
+        assertFalse( result.getContent().stream().anyMatch( item -> Role.ADMIN.equals(item.getRole())));
+    }
+
+    @Test
+    void getAdminThroughFilterAsNotAdminTest() {
+        userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+        userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
+        User user = userService.create( userBuilder.buildNew() );
+
+        AuthManager.loginAs( user );
+        Page<User> result = userService.getAll(Pageable.unpaged(),
+                new EqualSpecificationBuilder<User>().buildSpecification( new SearchCriteria("role", FilteringOperation.NOT_EQUAL, Role.TEACHER) ) );
+
+        assertEquals( 1, result.getTotalElements());
+        assertEquals( 1, result.getContent().size());
+        assertFalse( result.getContent().stream().anyMatch( item -> Role.ADMIN.equals(item.getRole())));
+    }
+
+    @Test
     void createAsNotAdminTest() {
         User user = userService.create( userBuilder.buildNew() );
 
@@ -119,6 +100,45 @@ public class UserServiceTest {
         assertThrowsExactly(AccessDeniedException.class, () -> userService.create( userBuilder.setRole(Role.ADMIN).buildNew() ) );
         assertThrowsExactly(AccessDeniedException.class, () -> userService.create( userBuilder.setRole(Role.TEACHER).buildNew() ) );
         assertThrowsExactly(AccessDeniedException.class, () -> userService.create( userBuilder.buildNew() ) );
+    }
+
+    @Test
+    void ensurePasswordIsEncryptedAfterCreateTest() {
+        User user = userBuilder.buildNew();
+        String passwd = user.getPassword();
+        User createdUser = userService.create( user );
+
+        assertTrue( BCrypt.checkpw(passwd, createdUser.getPassword()) );
+    }
+
+
+    @Test
+    void ensurePasswordIsEncryptedAfterUpdateTest() {
+        User user = userBuilder.buildNew();
+        User createdUser = userService.create( user );
+        String passwd = "passwd";
+
+        createdUser.setPassword(passwd);
+        User updatedUser = userService.update(createdUser);
+
+        assertTrue( BCrypt.checkpw(passwd, updatedUser.getPassword()) );
+    }
+
+    @Test
+    void updatePasswordThatIsAlreadyEncryptedTest() {
+        User user = userBuilder.buildNew();
+        user = userService.create( user );
+        String oldPasswd = user.getPassword();
+
+        user = userBuilder
+                .setId(user.getId())
+                .setPassword(user.getPassword()).build();
+
+
+        User updatedUser = userService.update( user );
+
+        assertEquals( user.getPassword(), updatedUser.getPassword() );
+        assertEquals( oldPasswd, updatedUser.getPassword() );
     }
 
     @Test
@@ -135,7 +155,7 @@ public class UserServiceTest {
 
         assertThrowsExactly(AccessDeniedException.class, () -> userService.update( updatedAdmin ) );
         User updatedUserFromDB = userService.update( updatedUser );
-        assertEqualsUserFields( updatedUser, updatedUserFromDB );
+        assertEntitiesEqual( updatedUser, updatedUserFromDB );
     }
 
     @Test
@@ -147,10 +167,45 @@ public class UserServiceTest {
 
         assertThrowsExactly(AccessDeniedException.class, () -> userService.delete( admin.getId() ) );
         userService.delete( user.getId() );
+        assertNull( userService.get( user.getId()) );
 
         AuthManager.loginAs( admin );
-        assertThrowsExactly(AccessDeniedException.class, () -> userService.get(user.getId()) );
         assertEquals( userService.get(admin.getId()), admin );
     }
 
+    @Test
+    void isLoginUniqueTest() {
+        User user1 = userService.create( userBuilder.buildNew() );
+        User user2 = userService.create( userBuilder.buildNew() );
+
+        user2.setLogin( user1.getLogin() );
+
+        assertTrue( userService.isUnique(user1) );
+        assertFalse( userService.isUnique(user2) );
+    }
+
+    @Override
+    protected AbstractService<User> getService() {
+        return userService;
+    }
+
+    @Override
+    protected User entityToDB() {
+        return userBuilder.toDB();
+    }
+
+    @Override
+    protected User buildEntity() {
+        return userBuilder.build();
+    }
+
+    @Override
+    protected User buildNewEntity() {
+        return userBuilder.buildNew();
+    }
+
+    @Override
+    protected void assertEntitiesEqual(User e1, User e2) {
+
+    }
 }

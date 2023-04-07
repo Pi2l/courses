@@ -18,19 +18,45 @@ import java.util.stream.Collectors;
 public class UserAuthorizationService {
 
     public boolean isAdmin() {
-        return getSpringRoles().contains( Role.ADMIN.name() );
+        return hasCurrentUserRole(Role.ADMIN);
     }
 
     public boolean isTeacher() {
-        return getSpringRoles().contains( Role.TEACHER.name() );
+        return hasCurrentUserRole(Role.TEACHER);
     }
 
     public boolean isUser() {
-        return getSpringRoles().contains( Role.USER.name() );
+        return hasCurrentUserRole(Role.USER);
+    }
+
+    private boolean hasCurrentUserRole(Role role) {
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            return currentUser.getRole().equals( role );
+        }
+        return false;
     }
 
     public boolean isAuthenticated() {
-        return SecurityContextHolder.getContext().getAuthentication() != null;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if ( authentication != null && authentication.isAuthenticated() ) {
+            return hasAnySpringUserRole(authentication);
+        }
+
+        return false;
+    }
+
+    private boolean hasAnySpringUserRole(Authentication authentication) {
+        for (Role role : Role.values()) {
+            long springUserRolesCount = authentication.getAuthorities()
+                    .stream().filter(r -> r.getAuthority().equals("ROLE_" + role.name())).count();
+
+            if (springUserRolesCount > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> getSpringRoles() {
