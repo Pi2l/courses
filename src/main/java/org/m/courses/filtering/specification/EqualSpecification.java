@@ -11,7 +11,7 @@ import javax.persistence.criteria.Root;
 
 public class EqualSpecification<Entity> implements Specification<Entity> {
 
-    private SearchCriteria criteria;
+    protected SearchCriteria criteria;
 
     public EqualSpecification(SearchCriteria criteria) {
         this.criteria = criteria;

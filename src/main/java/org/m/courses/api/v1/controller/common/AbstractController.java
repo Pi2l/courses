@@ -104,7 +104,7 @@ public abstract class AbstractController<
         getService().delete( id );
     }
 
-    private Entity getEntity(Long id) {
+    protected Entity getEntity(Long id) {
         Entity entity = getService().get(id);
         if (entity == null) {
             throw new ItemNotFoundException(id);

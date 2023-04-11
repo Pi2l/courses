@@ -1,18 +1,22 @@
 package org.m.courses.api.v1.user;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.filtering.UserSpecificationsBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
+import org.m.courses.service.CourseService;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 
@@ -34,8 +38,19 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private CourseService courseService;
+
+    @MockBean
+    CourseSpecificationsBuilder courseSpecificationsBuilder;
+
     @SpyBean
     private UserSpecificationsBuilder userEntitySpecificationsBuilder;
+
+    @BeforeEach
+    private void init() {
+        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
+    }
 
     @Override
     protected String getControllerPath() {
@@ -150,7 +165,6 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Override
     protected Map<Map<String, Object>, Pair<Function<User, Object>, Object>> getPatchValuesTestParameters() {
         Map<Map<String, Object>, Pair<Function<User, Object>, Object>> map = new HashMap<>();
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
 
         map.put(
                 Map.of("firstName", "firstName1"),
@@ -228,14 +242,12 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Test
     @Override
     public void updateEntity() throws Exception {
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
         super.updateEntity();
     }
 
     @Test
     @Override
     public void createEntityTest() throws Exception {
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
         super.createEntityTest();
     }
 
@@ -243,8 +255,6 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @Override
     protected Map< Consumer< UserRequest >, Pair< Function<User, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
         Map<Consumer<UserRequest>, Pair<Function<User, Object>, Object>> optionalValues = new HashMap<>();
-
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
 
         return optionalValues;
     }

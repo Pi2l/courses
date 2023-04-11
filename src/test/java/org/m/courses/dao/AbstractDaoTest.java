@@ -1,5 +1,6 @@
 package org.m.courses.dao;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.model.Identity;
 
@@ -19,6 +20,11 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     protected abstract Entity buildNewEntity();
 
     protected abstract void assertEntitiesEqual(Entity e1, Entity e2);
+
+    @AfterEach
+    void cleanDB() {
+        getDao().getAll().forEach( course -> getDao().delete(course.getId() ) );
+    }
 
     @Test
     void getAllEntitiesTest() {
