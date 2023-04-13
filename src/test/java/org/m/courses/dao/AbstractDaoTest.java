@@ -7,7 +7,6 @@ import org.m.courses.model.Identity;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Autologinable {
 
@@ -27,7 +26,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    void getAllEntitiesTest() {
+    public void getAllEntitiesTest() {
         clearDB();
 
         entityToDB();
@@ -43,7 +42,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    void getEntityTest() {
+    public void getEntityTest() {
         Entity entity = entityToDB();
         Entity entityFromDB = getDao().get(entity.getId());
 
@@ -51,7 +50,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    void saveEntityTest() {
+    public void saveEntityTest() {
         Entity entity = buildNewEntity();
 
         getDao().create(entity);
@@ -59,7 +58,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
         assertNotNull( getDao().get(entity.getId()) );
     }
     @Test
-    void updateEntityTest() {
+    public void updateEntityTest() {
         Entity entity = entityToDB();
         Entity updatedEntity = buildEntity();
         updatedEntity.setId( entity.getId() );
@@ -71,7 +70,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    void deleteEntityTest() {
+    public void deleteEntityTest() {
         Entity entityToDelete = entityToDB();
 
         getDao().delete( entityToDelete.getId() );

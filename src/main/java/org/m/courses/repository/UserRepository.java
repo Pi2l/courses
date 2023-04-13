@@ -1,8 +1,6 @@
 package org.m.courses.repository;
 
 import org.m.courses.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 

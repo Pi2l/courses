@@ -5,10 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
-import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.model.Role;
-import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,7 +22,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    void getEntityTest() {
+    public void getEntityTest() {
         Entity entity = buildNewEntity();
         getService().create( entity );
 
@@ -32,7 +30,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    void getAllEntitiesTest() {
+    public void getAllEntitiesTest() {
         getService().create( buildNewEntity() );
         getService().create( buildNewEntity() );
 
@@ -40,7 +38,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    void createEntityTest() {
+    public void createEntityTest() {
         Entity entity = buildNewEntity();
 
         Entity createdEntity = getService().create( entity );
@@ -50,7 +48,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    void updateEntityTest() {
+    public void updateEntityTest() {
         Entity entity = getService().create( buildNewEntity() );
         Entity updatedEntity = buildEntity();
         updatedEntity.setId( entity.getId() );
@@ -61,7 +59,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    void deleteEntityTest() {
+    public void deleteEntityTest() {
         Entity entity = getService().create( buildNewEntity() );
 
         getService().delete( entity.getId() );

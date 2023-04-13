@@ -3,10 +3,7 @@ package org.m.courses.filtering;
 import org.m.courses.filtering.specification.ComparisonSpecificationBuilder;
 import org.m.courses.filtering.specification.ContainSpecificationBuilder;
 import org.m.courses.filtering.specification.EqualOrNullSpecificationBuilder;
-import org.m.courses.filtering.specification.EqualSpecificationBuilder;
 import org.m.courses.model.Course;
-import org.m.courses.model.Role;
-import org.m.courses.model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -27,11 +27,8 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     @Autowired
     private UserBuilder userBuilder;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-
     @Test
-    void getAsNotAdminTest() {
+    public void getAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User teacher = userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -44,7 +41,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void getAllAsNotAdminTest() {
+    public void getAllAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -54,7 +51,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void getPageAsAdminTest() {
+    public void getPageAsAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         userService.create( userBuilder.buildNew() );
@@ -65,7 +62,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void getPageAsNotAdminTest() {
+    public void getPageAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -78,7 +75,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void getAdminThroughFilterAsNotAdminTest() {
+    public void getAdminThroughFilterAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -93,7 +90,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void createAsNotAdminTest() {
+    public void createAsNotAdminTest() {
         User user = userService.create( userBuilder.buildNew() );
 
         AuthManager.loginAs( user );
@@ -103,7 +100,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void ensurePasswordIsEncryptedAfterCreateTest() {
+    public void ensurePasswordIsEncryptedAfterCreateTest() {
         User user = userBuilder.buildNew();
         String passwd = user.getPassword();
         User createdUser = userService.create( user );
@@ -113,7 +110,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
 
     @Test
-    void ensurePasswordIsEncryptedAfterUpdateTest() {
+    public void ensurePasswordIsEncryptedAfterUpdateTest() {
         User user = userBuilder.buildNew();
         User createdUser = userService.create( user );
         String passwd = "passwd";
@@ -125,7 +122,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void updatePasswordThatIsAlreadyEncryptedTest() {
+    public void updatePasswordThatIsAlreadyEncryptedTest() {
         User user = userBuilder.buildNew();
         user = userService.create( user );
         String oldPasswd = user.getPassword();
@@ -142,7 +139,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void updateAsNotAdminTest() {
+    public void updateAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
 
@@ -159,7 +156,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void deleteAsNotAdminTest() {
+    public void deleteAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
 
@@ -174,7 +171,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    void isLoginUniqueTest() {
+    public void isLoginUniqueTest() {
         User user1 = userService.create( userBuilder.buildNew() );
         User user2 = userService.create( userBuilder.buildNew() );
 

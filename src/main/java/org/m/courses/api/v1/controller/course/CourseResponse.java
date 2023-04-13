@@ -5,9 +5,6 @@ import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.model.Course;
 import org.m.courses.model.User;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-
 public class CourseResponse extends AbstractResponse {
 
     private UserResponse teacher;

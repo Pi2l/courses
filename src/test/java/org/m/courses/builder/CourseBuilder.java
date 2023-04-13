@@ -2,7 +2,6 @@ package org.m.courses.builder;
 
 import org.m.courses.dao.CourseDao;
 import org.m.courses.model.Course;
-import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

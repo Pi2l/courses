@@ -12,7 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 
 @SpringBootTest
@@ -55,14 +56,14 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    void saveCourseWithNullFieldsTest() {
+    public void saveCourseWithNullFieldsTest() {
         Course course = courseBuilder.buildNew();
         course.setName(null);
         assertNotNullField(course, "name");
     }
 
     @Test
-    void createAsTeacherCourseThatTeacherIsNullTest() {
+    public void createAsTeacherCourseThatTeacherIsNullTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -85,7 +86,7 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    void updateCourseWithNullFieldsTest() {
+    public void updateCourseWithNullFieldsTest() {
         Course course = entityToDB();
         Course newCourse = buildNewEntity();
         newCourse.setId( course.getId() );
@@ -101,7 +102,7 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    void deleteCourseTest() {
+    public void deleteCourseTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         Course course = entityToDB();

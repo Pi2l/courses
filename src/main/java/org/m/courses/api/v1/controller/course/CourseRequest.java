@@ -2,7 +2,6 @@ package org.m.courses.api.v1.controller.course;
 
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Course;
-import org.m.courses.model.User;
 
 import javax.validation.constraints.NotBlank;
 

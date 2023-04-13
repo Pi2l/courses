@@ -27,7 +27,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
 
     @Test
     @Override
-    void updateEntityTest() {
+    public void updateEntityTest() {
         Course entity = getService().create( buildNewEntity() );
         Course updatedEntity = buildEntity();
 
@@ -40,7 +40,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void getAsAdminTest() {
+    public void getAsAdminTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
 
@@ -50,7 +50,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void createCourseThatDoesNotLeadTeacherTest() {
+    public void createCourseThatDoesNotLeadTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
@@ -66,7 +66,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void createAsAdminOrTeacherTest() {
+    public void createAsAdminOrTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
@@ -82,7 +82,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseThatDoesNotExistTest() {
+    public void updateCourseThatDoesNotExistTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         Course courseToUpdate = courseBuilder.buildNew();
 
@@ -97,7 +97,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseThatDoesNotHaveTeacherTest() {
+    public void updateCourseThatDoesNotHaveTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -117,7 +117,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseThatHasTeacherTest() {
+    public void updateCourseThatHasTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -141,7 +141,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseChangeTeacherTest() {
+    public void updateCourseChangeTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User courseOwnerTeacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
@@ -164,7 +164,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseChangeNoCourseTeacherToTeacherTest() {
+    public void updateCourseChangeNoCourseTeacherToTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -186,7 +186,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseThatDoesNotLeadTeacherTest() {
+    public void updateCourseThatDoesNotLeadTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
@@ -214,7 +214,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseAsUserTest() {
+    public void updateCourseAsUserTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
@@ -233,7 +233,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void deleteAsNotAdminTest() {
+    public void deleteAsNotAdminTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         Course course = courseBuilder.toDB();

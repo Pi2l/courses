@@ -6,7 +6,6 @@ import org.m.courses.model.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Service
