@@ -137,7 +137,8 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         Course courseToUpdate3 = courseBuilder.buildNew();
         courseToUpdate3.setId( course.getId() );
         courseToUpdate3.setTeacher( teacher );
-        courseService.update( courseToUpdate3 );
+        Course updatedCourse = courseService.update( courseToUpdate3 );
+        assertEquals( updatedCourse, courseToUpdate3 );
     }
 
     @Test
@@ -160,7 +161,8 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         course = courseBuilder.setTeacher(courseOwnerTeacher).toDB();
         Course courseToUpdateAsAdmin = courseBuilder.setTeacher(teacher).buildNew();
         courseToUpdateAsAdmin.setId( course.getId() );
-        courseService.update( courseToUpdateAsAdmin );
+        Course updatedCourse = courseService.update( courseToUpdateAsAdmin );
+        assertEquals( updatedCourse, courseToUpdateAsAdmin );
     }
 
     @Test
@@ -182,7 +184,8 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         course = courseBuilder.toDB();
         Course courseToUpdateAsAdmin = courseBuilder.setTeacher(teacher).buildNew();
         courseToUpdateAsAdmin.setId( course.getId() );
-        courseService.update( courseToUpdateAsAdmin );
+        Course updatedCourse = courseService.update( courseToUpdateAsAdmin );
+        assertEquals( updatedCourse, courseToUpdateAsAdmin );
     }
 
     @Test
