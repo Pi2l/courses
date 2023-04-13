@@ -44,7 +44,7 @@ public class CourseService extends AbstractService<Course> {
             User courseFromDBTeacher = courseFromDB.getTeacher();
             User courseTeacher = course.getTeacher();
 
-            if (!authorizationService.isAdmin() && courseFromDBTeacher != null && courseTeacher != null &&
+            if (authorizationService.isTeacher() && courseFromDBTeacher != null && courseTeacher != null &&
                     !courseTeacher.equals( courseFromDBTeacher ) ) {
                 throw new IllegalArgumentException("teacher cannot change ownership of course to other");
             }

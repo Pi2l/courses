@@ -214,6 +214,25 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
+    void updateCourseAsUserTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User user = userBuilder.setRole(Role.USER).toDB();
+
+        Course course = courseBuilder.toDB();
+
+        AuthManager.loginAs( user );
+
+        Course courseToUpdate = courseBuilder.setTeacher(teacher).buildNew();
+        courseToUpdate.setId( course.getId() );
+        assertThrowsExactly(AccessDeniedException.class, () -> courseService.update( courseToUpdate ));
+
+        Course courseToUpdateNoOwner = courseBuilder.buildNew();
+        courseToUpdateNoOwner.setId( course.getId() );
+        assertThrowsExactly(AccessDeniedException.class, () -> courseService.update( courseToUpdateNoOwner ));
+
+    }
+
+    @Test
     void deleteAsNotAdminTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
