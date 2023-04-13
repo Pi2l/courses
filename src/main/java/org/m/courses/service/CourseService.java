@@ -27,10 +27,14 @@ public class CourseService extends AbstractService<Course> {
     @Override
     public Course create(Course course) {
         User user = course.getTeacher();
-        if ( user == null || Role.TEACHER.equals( user.getRole() ) ) {
-            return super.create( course );
+        hasTeacherRoleOrIsNull(user);
+        return super.create( course );
+    }
+
+    private void hasTeacherRoleOrIsNull(User user) {
+        if ( !(user == null || Role.TEACHER.equals( user.getRole() )) ) {
+            throw new IllegalArgumentException("only teacher can lead the course or it can be null");
         }
-        throw new IllegalArgumentException("only teacher can lead the course"); // or course teacher can be null
     }
 
     @Override
@@ -40,17 +44,16 @@ public class CourseService extends AbstractService<Course> {
             User courseFromDBTeacher = courseFromDB.getTeacher();
             User courseTeacher = course.getTeacher();
 
-            if ( courseFromDBTeacher != null && courseTeacher != null &&
+            if (!authorizationService.isAdmin() && courseFromDBTeacher != null && courseTeacher != null &&
                     !courseTeacher.equals( courseFromDBTeacher ) ) {
-                throw new IllegalArgumentException("no one cannot change ownership of course from one teacher to other");
+                throw new IllegalArgumentException("teacher cannot change ownership of course to other");
             }
             if (authorizationService.isTeacher() && !authorizationService.getCurrentUser().equals(courseFromDBTeacher)) {
                 throw new IllegalArgumentException("teacher cannot assign itself to course that has no owner");
             }
-            if ( courseTeacher == null || Role.TEACHER.equals( courseTeacher.getRole() ) ) {
-                return super.update( course );
-            }
-            throw new IllegalArgumentException("only teacher can lead the course");
+
+            hasTeacherRoleOrIsNull(courseTeacher);
+            return super.update( course );
         } else {
             throw new IllegalArgumentException("course does not exist");
         }

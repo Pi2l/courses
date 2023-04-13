@@ -54,14 +54,12 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
-        AuthManager.loginAs( admin );
-
         IllegalArgumentException exception =
                 assertThrowsExactly(IllegalArgumentException.class, () -> courseService.create( courseBuilder.setTeacher( admin ).buildNew() ) );
-        assertEquals("only teacher can lead the course", exception.getMessage() );
+        assertEquals("only teacher can lead the course or it can be null", exception.getMessage() );
 
         exception = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.create( courseBuilder.setTeacher( user ).buildNew() ) );
-        assertEquals("only teacher can lead the course", exception.getMessage() );
+        assertEquals("only teacher can lead the course or it can be null", exception.getMessage() );
 
         Course course = courseService.create( courseBuilder.setTeacher( null ).buildNew() );
         assertNotNull( course );
@@ -94,7 +92,22 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateAsTeacherCourseThatDoesNotHaveTeacherTest() {
+    void updateCourseThatDoesNotExistTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        Course courseToUpdate = courseBuilder.buildNew();
+
+        courseToUpdate.setId( 1L );
+
+        IllegalArgumentException ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate ));
+        assertEquals(ex.getMessage(), "course does not exist");
+
+        Course course = courseBuilder.setTeacher(teacher).buildNew();
+        ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( course ));
+        assertEquals(ex.getMessage(), "course does not exist");
+    }
+
+    @Test
+    void updateCourseThatDoesNotHaveTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -106,24 +119,108 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         IllegalArgumentException ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate ));
         assertEquals(ex.getMessage(), "teacher cannot assign itself to course that has no owner");
 
-        Course courseToUpdate1 = courseBuilder.buildNew();
-        courseToUpdate1.setId( course.getId() );
-        courseToUpdate1.setTeacher( teacher );
-
-        ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate1 ));
-        assertEquals(ex.getMessage(), "teacher cannot assign itself to course that has no owner");
-
         AuthManager.loginAs( admin );
         course = courseBuilder.toDB();
         Course courseToUpdate2 = courseBuilder.buildNew();
         courseToUpdate2.setId( course.getId() );
         courseService.update( courseToUpdate2 );
+    }
+
+    @Test
+    void updateCourseThatHaveTeacherTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+
+        Course course = courseBuilder.toDB();
+
+        AuthManager.loginAs( teacher );
+        Course courseToUpdate1 = courseBuilder.buildNew();
+        courseToUpdate1.setId( course.getId() );
+        courseToUpdate1.setTeacher( teacher );
+
+        IllegalArgumentException ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate1 ));
+        assertEquals(ex.getMessage(), "teacher cannot assign itself to course that has no owner");
+
+        AuthManager.loginAs( admin );
 
         course = courseBuilder.toDB();
         Course courseToUpdate3 = courseBuilder.buildNew();
         courseToUpdate3.setId( course.getId() );
         courseToUpdate3.setTeacher( teacher );
         courseService.update( courseToUpdate3 );
+    }
+
+    @Test
+    void updateCourseChangeTeacherTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User courseOwnerTeacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+
+        Course course = courseBuilder.setTeacher(courseOwnerTeacher).toDB();
+
+        AuthManager.loginAs( teacher );
+        Course courseToUpdate = courseBuilder.setTeacher(teacher).buildNew();
+        courseToUpdate.setId( course.getId() );
+
+        IllegalArgumentException ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate ));
+        assertEquals(ex.getMessage(), "teacher cannot change ownership of course to other");
+
+        AuthManager.loginAs( admin );
+
+        course = courseBuilder.setTeacher(courseOwnerTeacher).toDB();
+        Course courseToUpdateAsAdmin = courseBuilder.setTeacher(teacher).buildNew();
+        courseToUpdateAsAdmin.setId( course.getId() );
+        courseService.update( courseToUpdateAsAdmin );
+    }
+
+    @Test
+    void updateCourseChangeNoCourseTeacherToTeacherTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+
+        Course course = courseBuilder.toDB();
+
+        AuthManager.loginAs( teacher );
+        Course courseToUpdate = courseBuilder.setTeacher(teacher).buildNew();
+        courseToUpdate.setId( course.getId() );
+
+        IllegalArgumentException ex = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate ));
+        assertEquals(ex.getMessage(), "teacher cannot assign itself to course that has no owner");
+
+        AuthManager.loginAs( admin );
+
+        course = courseBuilder.toDB();
+        Course courseToUpdateAsAdmin = courseBuilder.setTeacher(teacher).buildNew();
+        courseToUpdateAsAdmin.setId( course.getId() );
+        courseService.update( courseToUpdateAsAdmin );
+    }
+
+    @Test
+    void updateCourseThatDoesNotLeadTeacherTest() {
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        User user = userBuilder.setRole(Role.USER).toDB();
+
+        Course course = courseBuilder.toDB();
+        Course courseToUpdate = courseBuilder.setTeacher( admin ).buildNew();
+        courseToUpdate.setId( course.getId() );
+
+        IllegalArgumentException exception =
+                assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdate ) );
+        assertEquals("only teacher can lead the course or it can be null", exception.getMessage() );
+
+        course = courseBuilder.toDB();
+        Course courseToUpdateAdminTeacher = courseBuilder.setTeacher( admin ).buildNew();
+        courseToUpdateAdminTeacher.setId( course.getId() );
+
+        exception = assertThrowsExactly(IllegalArgumentException.class, () -> courseService.update( courseToUpdateAdminTeacher ) );
+        assertEquals("only teacher can lead the course or it can be null", exception.getMessage() );
+
+        course = courseBuilder.toDB();
+        Course courseToUpdateNullTeacher = courseBuilder.buildNew();
+        courseToUpdateNullTeacher.setId( course.getId() );
+
+        Course updatedCourse = courseService.update( courseToUpdateNullTeacher );
+        assertNotNull( updatedCourse );
     }
 
     @Test
