@@ -1,9 +1,13 @@
 package org.m.courses.dao;
 
 import org.junit.jupiter.api.Test;
+import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.CourseBuilder;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Course;
+import org.m.courses.model.Role;
+import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -57,6 +61,20 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         assertNotNullField(course, "name");
     }
 
+    @Test
+    void createAsTeacherCourseThatTeacherIsNullTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+
+        AuthManager.loginAs( teacher );
+        assertThrowsExactly(AccessDeniedException.class, () -> courseDao.create( courseBuilder.buildNew() ) );
+
+        AuthManager.loginAs( admin );
+        Course course = courseBuilder.buildNew();
+        Course createdCourse = courseDao.create( course );
+        assertEquals( createdCourse, course );
+    }
+
     private void assertNotNullField(Course course, String fieldName) {
         DataIntegrityViolationException exception =
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> courseDao.create(course) );
@@ -80,6 +98,19 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         String detailedCause = exception.getMessage();
 
         assertEquals("could not execute statement; SQL [n/a]; constraint [null]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement", detailedCause);
+    }
+
+    @Test
+    void deleteCourseTest() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        Course course = entityToDB();
+
+        AuthManager.loginAs( teacher );
+        assertThrowsExactly( AccessDeniedException.class, () -> courseDao.delete( course.getId() ) );
+
+        AuthManager.loginAs( admin );
+        courseDao.delete( course.getId() );
     }
 }
 

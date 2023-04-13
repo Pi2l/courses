@@ -81,16 +81,6 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         assertThrowsExactly(AccessDeniedException.class, () -> courseService.create( buildNewEntity() ) );
     }
 
-    //move to dao test?
-    @Test
-    void createAsTeacherCourseThatTeacherIsNullTest() {
-        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
-
-        AuthManager.loginAs( teacher );
-
-        assertThrowsExactly(AccessDeniedException.class, () -> courseService.create( courseBuilder.buildNew() ) );
-    }
-
     @Test
     void updateCourseThatDoesNotExistTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
@@ -127,7 +117,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    void updateCourseThatHaveTeacherTest() {
+    void updateCourseThatHasTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 

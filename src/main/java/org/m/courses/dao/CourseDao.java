@@ -2,11 +2,9 @@ package org.m.courses.dao;
 
 import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Course;
-import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.repository.CourseRepository;
 import org.m.courses.repository.PrimaryRepository;
-import org.m.courses.repository.UserRepository;
 import org.m.courses.service.UserAuthorizationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,10 +12,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
-import static org.springframework.data.jpa.domain.Specification.not;
 import static org.springframework.data.jpa.domain.Specification.where;
 
 @Component
@@ -48,7 +44,6 @@ public class CourseDao extends AbstractDao<Course> {
     }
 
     public Course create(Course course) {
-//        if ( isAdmin() || (authorizationService.isTeacher() && authorizationService.getCurrentUser().equals( course.getTeacher() )) ) {
         Long teacherId = getTeacherId(course);
         if ( canModify( teacherId )) {
             return getRepository().save(course);
@@ -74,7 +69,11 @@ public class CourseDao extends AbstractDao<Course> {
 
     @Override
     public void delete(Long id) {
-        Long teacherId = getTeacherId( get(id) );
+        Course course = get(id);
+        if (course == null) {
+            return;
+        }
+        Long teacherId = getTeacherId( course );
 
         if ( !canModify( teacherId ) ) {
             throw new AccessDeniedException();
@@ -93,12 +92,6 @@ public class CourseDao extends AbstractDao<Course> {
     }
 
     private Specification<Course> buildReadOnlySpec() {
-//        if ( isAdmin() ) {
-            return where( null );
-//        } else if ( authorizationService.isTeacher() ) {
-//            return buildEqualSpec( "teacher", authorizationService.getCurrentUser().getId() );
-//        }
-//        throw new AccessDeniedException();
-//        return (root, cq, cb) -> cb.isNotNull( root.get("teacher") );
+        return where( null );
     }
 }
