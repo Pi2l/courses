@@ -47,6 +47,8 @@ public class UserService extends AbstractService<User> {
             } else {
                 user.setPassword( passwordEncoder.encode( user.getPassword() ) );
             }
+        } else {
+            return super.update( null );
         }
 
         return super.update( user );

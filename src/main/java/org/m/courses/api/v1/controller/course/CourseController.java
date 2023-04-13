@@ -4,13 +4,10 @@ import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.CreateValidationGroup;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.PatchFieldValidationException;
-import org.m.courses.exception.UniqueFieldViolationException;
 import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
-import org.m.courses.filtering.UserSpecificationsBuilder;
 import org.m.courses.model.Course;
 import org.m.courses.model.User;
-import org.m.courses.service.AbstractService;
 import org.m.courses.service.CourseService;
 import org.m.courses.service.UserService;
 import org.springframework.core.convert.ConversionService;
@@ -26,9 +23,11 @@ import javax.validation.groups.Default;
 import java.util.Map;
 import java.util.Set;
 
+import static org.m.courses.api.v1.controller.common.ApiPath.COURSE_API;
+
 
 @RestController
-@RequestMapping("/api/v1/courses")
+@RequestMapping(COURSE_API)
 public class CourseController extends AbstractController<Course, CourseRequest, CourseResponse> {
 
     private final CourseService courseService;

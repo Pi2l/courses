@@ -20,9 +20,11 @@ import javax.validation.groups.Default;
 import java.util.Map;
 import java.util.Set;
 
+import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
+
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping(USER_API)
 public class UserController extends AbstractController<User, UserRequest, UserResponse> {
 
     private final UserService userService;

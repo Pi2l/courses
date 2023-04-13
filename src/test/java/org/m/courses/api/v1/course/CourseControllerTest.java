@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.m.courses.api.v1.controller.common.ApiPath.COURSE_API;
 import static org.m.courses.filtering.FilteringOperation.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -47,7 +48,7 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
     @Override
     protected String getControllerPath() {
-        return "/api/v1/courses/";
+        return COURSE_API;
     }
 
     @Override

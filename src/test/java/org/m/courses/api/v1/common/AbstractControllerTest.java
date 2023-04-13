@@ -71,7 +71,7 @@ public abstract class AbstractControllerTest<
     protected abstract Entity getNewEntity();
 
     @Test
-    void getExistingEntityByIdTest() throws Exception {
+    public void getExistingEntityByIdTest() throws Exception {
         Entity entity = getNewEntity();
         whenGetEntity(anyLong(), entity);
 
@@ -84,7 +84,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    void getNotExistingEntityByIdTest() throws Exception {
+    public void getNotExistingEntityByIdTest() throws Exception {
         Entity entity = getNewEntity();
         whenGetEntity(anyLong(), null);
 
@@ -531,7 +531,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    void deleteEntityTest() throws Exception {
+    public void deleteEntityTest() throws Exception {
         Entity entity = getNewEntity();
 
         mockMvc.perform( delete( getControllerPath() + "/{id}", entity.getId() )
@@ -542,7 +542,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    void deleteEntityFailTest() throws Exception {
+    public void deleteEntityFailTest() throws Exception {
         Entity entity = getNewEntity();
 
         Mockito.doThrow(new ItemNotFoundException( entity.getId() ))

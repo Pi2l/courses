@@ -153,7 +153,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
         AuthManager.loginAs( user );
 
-        assertThrowsExactly(AccessDeniedException.class, () -> userService.update( updatedAdmin ) );
+        assertThrowsExactly(IllegalArgumentException.class, () -> userService.update( updatedAdmin ) );
         User updatedUserFromDB = userService.update( updatedUser );
         assertEntitiesEqual( updatedUser, updatedUserFromDB );
     }

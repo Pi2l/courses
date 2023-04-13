@@ -3,20 +3,18 @@ package org.m.courses.api.v1.user;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.common.AbstractControllerTest;
+import org.m.courses.api.v1.controller.user.UserController;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.builder.UserBuilder;
-import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.filtering.UserSpecificationsBuilder;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
-import org.m.courses.service.CourseService;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 
@@ -27,22 +25,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 import static org.m.courses.filtering.FilteringOperation.EQUAL;
 import static org.m.courses.filtering.FilteringOperation.NOT_EQUAL;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@WebMvcTest
+@WebMvcTest( UserController.class )
 public class UserControllerTest extends AbstractControllerTest<User, UserRequest, UserResponse> {
 
     @MockBean
     private UserService userService;
-
-    @MockBean
-    private CourseService courseService;
-
-    @MockBean
-    CourseSpecificationsBuilder courseSpecificationsBuilder;
 
     @SpyBean
     private UserSpecificationsBuilder userEntitySpecificationsBuilder;
@@ -54,7 +47,7 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
 
     @Override
     protected String getControllerPath() {
-        return "/api/v1/users/";
+        return USER_API;
     }
 
     @Override

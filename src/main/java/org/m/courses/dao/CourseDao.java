@@ -47,18 +47,36 @@ public class CourseDao extends AbstractDao<Course> {
                 .orElse(null);
     }
 
+    public Course create(Course course) {
+//        if ( isAdmin() || (authorizationService.isTeacher() && authorizationService.getCurrentUser().equals( course.getTeacher() )) ) {
+        Long teacherId = getTeacherId(course);
+        if ( canModify( teacherId )) {
+            return getRepository().save(course);
+        }
+        throw new AccessDeniedException();
+    }
+
     @Override
     public Course update(Course course) {
-        if ( !canModify( course.getTeacher().getId() ) ) {
+        Long teacherId = getTeacherId(course);
+
+        if ( !canModify( teacherId ) ) {
             throw new AccessDeniedException();
         }
 
         return getRepository().save(course);
     }
 
+    private Long getTeacherId(Course course) {
+        User teacher = course.getTeacher();
+        return teacher != null ? teacher.getId() : null;
+    }
+
     @Override
     public void delete(Long id) {
-        if ( !canModify( get(id).getTeacher().getId() ) ) {
+        Long teacherId = getTeacherId( get(id) );
+
+        if ( !canModify( teacherId ) ) {
             throw new AccessDeniedException();
         }
         repository.deleteById(id);
@@ -70,15 +88,17 @@ public class CourseDao extends AbstractDao<Course> {
     }
 
     @Override
-    protected boolean canModify(Long id) {
-        return super.canModify(id) || authorizationService.getCurrentUser().getId().equals( id );
+    protected boolean canModify(Long teacherId) {
+        return super.canModify(teacherId) || (authorizationService.isTeacher() && authorizationService.getCurrentUser().getId().equals( teacherId ));
     }
 
     private Specification<Course> buildReadOnlySpec() {
-        return where( null );
+//        if ( isAdmin() ) {
+            return where( null );
+//        } else if ( authorizationService.isTeacher() ) {
+//            return buildEqualSpec( "teacher", authorizationService.getCurrentUser().getId() );
+//        }
+//        throw new AccessDeniedException();
+//        return (root, cq, cb) -> cb.isNotNull( root.get("teacher") );
     }
-
-//    private boolean isStudentOfThisCourse() {
-//        return repository.findStudentById( authorizationService.getCurrentUser().getId() ).isPresent();
-//    }
 }

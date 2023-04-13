@@ -55,12 +55,27 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         Course course = courseBuilder.buildNew();
         course.setName(null);
         assertNotNullField(course, "name");
-
     }
 
     private void assertNotNullField(Course course, String fieldName) {
         DataIntegrityViolationException exception =
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> courseDao.create(course) );
+
+        String detailedCause = exception.getMessage();
+
+        assertEquals("could not execute statement; SQL [n/a]; constraint [null]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement", detailedCause);
+    }
+
+    @Test
+    void updateCourseWithNullFieldsTest() {
+        Course course = entityToDB();
+        Course newCourse = buildNewEntity();
+        newCourse.setId( course.getId() );
+
+        newCourse.setName(null);
+
+        DataIntegrityViolationException exception =
+                assertThrowsExactly( DataIntegrityViolationException.class, () -> courseDao.update(newCourse) );
 
         String detailedCause = exception.getMessage();
 
