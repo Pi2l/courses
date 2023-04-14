@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends Autologinable {
 
-    @Autowired private UserBuilder userBuilder;
+    @Autowired protected UserBuilder userBuilder;
 
     @AfterEach
     void clearDB() {

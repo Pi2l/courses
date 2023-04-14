@@ -12,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
@@ -68,7 +67,8 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
         AuthManager.loginAs( teacher );
-        assertThrowsExactly(AccessDeniedException.class, () -> courseDao.create( courseBuilder.buildNew() ) );
+        Course courseAsTeacher = courseBuilder.buildNew();
+        assertThrowsExactly(AccessDeniedException.class, () -> courseDao.create( courseAsTeacher ) );
 
         AuthManager.loginAs( admin );
         Course course = courseBuilder.buildNew();
