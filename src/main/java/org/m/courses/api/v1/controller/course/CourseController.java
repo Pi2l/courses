@@ -79,7 +79,7 @@ public class CourseController extends AbstractController<Course, CourseRequest, 
 
     private void patchField(Course course, Map.Entry< String, Object > field) {
         switch ( field.getKey() ) {
-            case "teacher":
+            case "teacherId":
                 Long teacherId = conversionService.convert(field.getValue(), Long.class);
                 User teacher = userService.get( teacherId );
 
