@@ -55,14 +55,14 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    public void saveCourseWithNullFieldsTest() {
+    void saveCourseWithNullFieldsTest() {
         Course course = courseBuilder.buildNew();
         course.setName(null);
         assertNotNullField(course, "name");
     }
 
     @Test
-    public void createAsTeacherCourseThatTeacherIsNullTest() {
+    void createAsTeacherCourseThatTeacherIsNullTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -86,7 +86,7 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    public void updateCourseWithNullFieldsTest() {
+    void updateCourseWithNullFieldsTest() {
         Course course = entityToDB();
         Course newCourse = buildNewEntity();
         newCourse.setId( course.getId() );
@@ -102,7 +102,7 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     }
 
     @Test
-    public void deleteCourseTest() {
+    void deleteCourseTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         Course course = entityToDB();

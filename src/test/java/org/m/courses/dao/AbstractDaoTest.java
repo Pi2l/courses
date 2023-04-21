@@ -26,7 +26,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    public void getAllEntitiesTest() {
+    void getAllEntitiesTest() {
         clearDB();
 
         entityToDB();
@@ -42,7 +42,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    public void getEntityTest() {
+    void getEntityTest() {
         Entity entity = entityToDB();
         Entity entityFromDB = getDao().get(entity.getId());
 
@@ -50,7 +50,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    public void saveEntityTest() {
+    void saveEntityTest() {
         Entity entity = buildNewEntity();
 
         getDao().create(entity);
@@ -58,7 +58,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
         assertNotNull( getDao().get(entity.getId()) );
     }
     @Test
-    public void updateEntityTest() {
+    void updateEntityTest() {
         Entity entity = entityToDB();
         Entity updatedEntity = buildEntity();
         updatedEntity.setId( entity.getId() );
@@ -70,7 +70,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
     }
 
     @Test
-    public void deleteEntityTest() {
+    void deleteEntityTest() {
         Entity entityToDelete = entityToDB();
 
         getDao().delete( entityToDelete.getId() );

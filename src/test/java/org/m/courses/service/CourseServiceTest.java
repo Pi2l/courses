@@ -22,7 +22,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     private CourseBuilder courseBuilder;
 
     @Test
-    public void getAsAdminTest() {
+    void getAsAdminTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
 
@@ -32,7 +32,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void createCourseThatDoesNotLeadTeacherTest() {
+    void createCourseThatDoesNotLeadTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
@@ -50,7 +50,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void createAsAdminOrTeacherTest() {
+    void createAsAdminOrTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
@@ -73,7 +73,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void updateCourseThatDoesNotHaveTeacherTest() {
+    void updateCourseThatDoesNotHaveTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
@@ -103,7 +103,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void updateCourseChangeTeacherTest() {
+    void updateCourseChangeTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User courseOwnerTeacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
@@ -126,7 +126,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void updateCourseThatDoesNotLeadTeacherTest() {
+    void updateCourseThatDoesNotLeadTeacherTest() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
         Course courseToUpdate = getCourseToUpdate(admin);
@@ -147,7 +147,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void updateCourseAsUserTest() {
+    void updateCourseAsUserTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
 
@@ -172,7 +172,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void deleteAsNotAdminTest() {
+    void deleteAsNotAdminTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         User user = userBuilder.setRole(Role.USER).toDB();
@@ -190,7 +190,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     }
 
     @Test
-    public void deleteCourseByTeacherTest() {
+    void deleteCourseByTeacherTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         Course course = courseBuilder.toDB();

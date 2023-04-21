@@ -49,7 +49,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void saveUserWithNullFieldsTest() {
+    void saveUserWithNullFieldsTest() {
         User user = userBuilder.buildNew();
         user.setFirstName(null);
         assertNotNullField(user, "firstName");
@@ -85,7 +85,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void saveUserWithPhoneNumberGreaterThanAllowedTest() {
+    void saveUserWithPhoneNumberGreaterThanAllowedTest() {
         User user = userBuilder.buildNew();
         user.setPhoneNumber("123456789012345678901234");
 
@@ -98,7 +98,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void saveUserWithNonUniqueLoginTest() {
+    void saveUserWithNonUniqueLoginTest() {
         User userFromDB = userBuilder.toDB();
         User userWithSameLogin = userBuilder.buildNew();
         userWithSameLogin.setLogin( userFromDB.getLogin() );
@@ -112,7 +112,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void updateUserWithNullFieldsTest() {
+    void updateUserWithNullFieldsTest() {
         User user = userBuilder.toDB();
         User userWithNullFields = new User();
         userWithNullFields.setId( user.getId() );
@@ -121,7 +121,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void updateUserWithPhoneNumberGreaterThanAllowedTest() {
+    void updateUserWithPhoneNumberGreaterThanAllowedTest() {
         User user = userBuilder.toDB();
         user.setPhoneNumber("123456789012345678901234");
 
@@ -129,7 +129,7 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
     }
 
     @Test
-    public void updateUserWithNonUniqueLoginTest() {
+    void updateUserWithNonUniqueLoginTest() {
         User userFromDB = userBuilder.toDB();
         User userWithSameLogin = userBuilder.toDB();
         userWithSameLogin.setLogin( userFromDB.getLogin() );

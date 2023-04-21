@@ -22,7 +22,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    public void getEntityTest() {
+    void getEntityTest() {
         Entity entity = buildNewEntity();
         getService().create( entity );
 
@@ -30,7 +30,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    public void getAllEntitiesTest() {
+    void getAllEntitiesTest() {
         getService().create( buildNewEntity() );
         getService().create( buildNewEntity() );
 
@@ -38,7 +38,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    public void createEntityTest() {
+    void createEntityTest() {
         Entity entity = buildNewEntity();
 
         Entity createdEntity = getService().create( entity );
@@ -48,7 +48,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    public void updateEntityTest() {
+    void updateEntityTest() {
         Entity entity = getService().create( buildNewEntity() );
         Entity updatedEntity = buildEntity();
         updatedEntity.setId( entity.getId() );
@@ -59,7 +59,7 @@ public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends
     }
 
     @Test
-    public void deleteEntityTest() {
+    void deleteEntityTest() {
         Entity entity = getService().create( buildNewEntity() );
 
         getService().delete( entity.getId() );

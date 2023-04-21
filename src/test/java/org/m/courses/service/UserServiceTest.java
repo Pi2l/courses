@@ -28,7 +28,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     private UserBuilder userBuilder;
 
     @Test
-    public void getAsNotAdminTest() {
+    void getAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User teacher = userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -41,7 +41,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void getAllAsNotAdminTest() {
+    void getAllAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -51,7 +51,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void getPageAsAdminTest() {
+    void getPageAsAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         userService.create( userBuilder.buildNew() );
@@ -62,7 +62,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void getPageAsNotAdminTest() {
+    void getPageAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -75,7 +75,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void getAdminThroughFilterAsNotAdminTest() {
+    void getAdminThroughFilterAsNotAdminTest() {
         userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         userService.create( userBuilder.setRole(Role.TEACHER).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
@@ -90,7 +90,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void createAsNotAdminTest() {
+    void createAsNotAdminTest() {
         User user = userService.create( userBuilder.buildNew() );
 
         AuthManager.loginAs( user );
@@ -100,7 +100,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void ensurePasswordIsEncryptedAfterCreateTest() {
+    void ensurePasswordIsEncryptedAfterCreateTest() {
         User user = userBuilder.buildNew();
         String passwd = user.getPassword();
         User createdUser = userService.create( user );
@@ -110,7 +110,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
 
 
     @Test
-    public void ensurePasswordIsEncryptedAfterUpdateTest() {
+    void ensurePasswordIsEncryptedAfterUpdateTest() {
         User user = userBuilder.buildNew();
         User createdUser = userService.create( user );
         String passwd = "passwd";
@@ -122,7 +122,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void updatePasswordThatIsAlreadyEncryptedTest() {
+    void updatePasswordThatIsAlreadyEncryptedTest() {
         User user = userBuilder.buildNew();
         user = userService.create( user );
         String oldPasswd = user.getPassword();
@@ -139,7 +139,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void updateAsNotAdminTest() {
+    void updateAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
 
@@ -156,7 +156,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void deleteAsNotAdminTest() {
+    void deleteAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
 
@@ -171,7 +171,7 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
-    public void isLoginUniqueTest() {
+    void isLoginUniqueTest() {
         User user1 = userService.create( userBuilder.buildNew() );
         User user2 = userService.create( userBuilder.buildNew() );
 
