@@ -6,4 +6,7 @@ public class ItemNotFoundException extends RuntimeException {
         super("item not found with id = " + id);
     }
 
+    public ItemNotFoundException(String message) {
+        super(message);
+    }
 }

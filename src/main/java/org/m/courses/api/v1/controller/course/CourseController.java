@@ -1,8 +1,8 @@
 package org.m.courses.api.v1.controller.course;
 
 import org.m.courses.api.v1.controller.common.AbstractController;
-import org.m.courses.api.v1.controller.common.CreateValidationGroup;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
+import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
 import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
@@ -11,9 +11,6 @@ import org.m.courses.model.User;
 import org.m.courses.service.CourseService;
 import org.m.courses.service.UserService;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,13 +28,9 @@ import static org.m.courses.api.v1.controller.common.ApiPath.COURSE_API;
 public class CourseController extends AbstractController<Course, CourseRequest, CourseResponse> {
 
     private final CourseService courseService;
-
     private final UserService userService;
-
     private final Validator validator;
-
     private final ConversionService conversionService;
-
     private final CourseSpecificationsBuilder courseSpecificationsBuilder;
 
     public CourseController(CourseService courseService, UserService userService, ConversionService conversionService, Validator validator, CourseSpecificationsBuilder courseSpecificationsBuilder) {
@@ -56,32 +49,39 @@ public class CourseController extends AbstractController<Course, CourseRequest, 
     }
 
     @Override
-    public CourseResponse create(@Validated({ CreateValidationGroup.class, Default.class }) @RequestBody CourseRequest requestBody) {
-        Course course = requestBody.createEntity();
-        course.setTeacher( userService.get( requestBody.getTeacherId() ) );
+    public Course createEntity(Course course, CourseRequest request) {
+        User user = getTeacher( request.getTeacherId() );
 
-        Course createdEntity = createEntity( course );
+        course.setTeacher( user );
 
-        return convertToResponse( createdEntity );
+        return super.createEntity( course, request );
+    }
+
+    private User getTeacher(Long teacherId) {
+        User user = null;
+        if (teacherId != null) {
+            user = userService.get( teacherId );
+            if (user == null) {
+                throw new ItemNotFoundException("teacher not found with id = " + teacherId );
+            }
+        }
+        return user;
     }
 
     @Override
-    public CourseResponse update(@PathVariable Long id, @Validated({ UpdateValidationGroup.class, Default.class }) @RequestBody CourseRequest requestBody) {
-        Course courseToUpdate = getEntity(id);
+    public Course updateEntity(Course course, CourseRequest request) {
+        User user = getTeacher( request.getTeacherId() );
 
-        Course course = requestBody.updateEntity( courseToUpdate );
-        course.setTeacher( userService.get( requestBody.getTeacherId() ) );
+        course.setTeacher( user );
 
-        Course updatedEntity = updateEntity( course );
-
-        return convertToResponse( updatedEntity );
+        return super.updateEntity( course, request );
     }
 
     private void patchField(Course course, Map.Entry< String, Object > field) {
         switch ( field.getKey() ) {
             case "teacherId":
                 Long teacherId = conversionService.convert(field.getValue(), Long.class);
-                User teacher = userService.get( teacherId );
+                User teacher = getTeacher(teacherId);
 
                 validateField("teacherId", teacher);
                 course.setTeacher( teacher );
@@ -135,8 +135,4 @@ public class CourseController extends AbstractController<Course, CourseRequest, 
         return conversionService;
     }
 
-    @Override
-    protected Course patchEntity(Course entity) {
-        return updateEntity(entity);
-    }
 }

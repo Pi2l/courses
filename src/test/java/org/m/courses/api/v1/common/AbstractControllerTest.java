@@ -127,14 +127,14 @@ public abstract class AbstractControllerTest<
                             .accept(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(jsonPath("$." + errorMsg.getFirst()).value(errorMsg.getSecond()))
-                    .andExpect(status().isNotAcceptable());
+                    .andExpect(status().is4xxClientError());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
     @Test
-    public void updateInvalidEntityTest() {
+    void updateInvalidEntityTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
         getUpdateWithWrongValuesTestParameters().forEach( this::doUpdateWithWrongValuesTestParameters );
@@ -153,14 +153,14 @@ public abstract class AbstractControllerTest<
                             .accept(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect( jsonPath("$." + errorMsg.getFirst()).value(errorMsg.getSecond()) )
-                    .andExpect( status().isNotAcceptable() );
+                    .andExpect( status().is4xxClientError() );
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
     @Test
-    public void patchEntityTest() {
+    void patchEntityTest() {
         getPatchValuesTestParameters().forEach( this::doPatchValuesTestParameters );
     }
 
@@ -186,7 +186,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void patchInvalidEntityTest() {
+    void patchInvalidEntityTest() {
         getPatchInvalidValuesTestParameters().forEach( this::doPatchInvalidValuesTestParameters );
     }
 
@@ -204,14 +204,14 @@ public abstract class AbstractControllerTest<
                     .andDo(print())
                     .andExpect( jsonPath("$." + valueProvider.getFirst())
                             .value(valueProvider.getSecond()) )
-                    .andExpect( status().isNotAcceptable() );
+                    .andExpect( status().is4xxClientError() );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void createEntityWithOptionalFieldsTest() {
+    void createEntityWithOptionalFieldsTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
 
         getCreateWithOptionalValuesTestParameters().forEach( this::doCreateWithOptionalValuesTestParameters );
@@ -246,7 +246,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void updateEntityWithOptionalFieldsTest() {
+    void updateEntityWithOptionalFieldsTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
 
         getUpdateWithOptionalValuesTestParameters().forEach( this::doUpdateWithOptionalValuesTestParameters );
@@ -315,7 +315,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void updateNotExistingEntity() throws Exception {
+    void updateNotExistingEntity() throws Exception {
         Entity entity = getNewEntity();
 
         Entity entityWithNewValues = getNewEntity();
@@ -355,7 +355,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllTest() throws Exception {
+    void getAllTest() throws Exception {
         List<Entity> entities = new LinkedList<>( Arrays.asList( getNewEntity(), getNewEntity() ) );
 
         Page<Entity> page = mockPage( entities );
@@ -370,7 +370,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithDefaultPageValuesTest() throws Exception {
+    void getAllWithDefaultPageValuesTest() throws Exception {
         mockPage( List.of() );
 
         mockMvc.perform( get( getControllerPath() )
@@ -384,7 +384,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithCustomPageValuesTest() throws Exception {
+    void getAllWithCustomPageValuesTest() throws Exception {
         mockPage( List.of() );
 
         mockMvc.perform( get( getControllerPath() )
@@ -400,7 +400,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithCustomInvalidPageValuesTest() throws Exception {
+    void getAllWithCustomInvalidPageValuesTest() throws Exception {
         mockPage( List.of() );
 
         mockMvc.perform( get( getControllerPath() )
@@ -421,7 +421,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithSortingTest() {
+    void getAllWithSortingTest() {
         mockPage(List.of());
 
         getSortingTestParams().forEach( this::doSortingParamTest );
@@ -443,7 +443,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithFilteringTest() {
+    void getAllWithFilteringTest() {
         mockPage(List.of());
 
         getFilteringTestParams().forEach( this::doFilteringParamTest );
@@ -471,7 +471,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void getAllWithInvalidFilteringTest() {
+    void getAllWithInvalidFilteringTest() {
         mockPage(List.of());
 
         getInvalidFilteringTestParams().forEach( this::doInvalidFilteringParamTest );
@@ -531,7 +531,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void deleteEntityTest() throws Exception {
+    void deleteEntityTest() throws Exception {
         Entity entity = getNewEntity();
 
         mockMvc.perform( delete( getControllerPath() + "/{id}", entity.getId() )
@@ -542,7 +542,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
-    public void deleteEntityFailTest() throws Exception {
+    void deleteEntityFailTest() throws Exception {
         Entity entity = getNewEntity();
 
         Mockito.doThrow(new ItemNotFoundException( entity.getId() ))

@@ -25,8 +25,10 @@ public class ControllerExceptionHandler {
 
     @ExceptionHandler(ItemNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    String handler(RuntimeException exception) {
-        return exception.getMessage();
+    Map<String, String> handler(RuntimeException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

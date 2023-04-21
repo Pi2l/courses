@@ -28,11 +28,8 @@ import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 public class UserController extends AbstractController<User, UserRequest, UserResponse> {
 
     private final UserService userService;
-
     private final Validator validator;
-
     private final ConversionService conversionService;
-
     private final UserSpecificationsBuilder userSpecificationsBuilder;
 
     public UserController(UserService userService, ConversionService conversionService, Validator validator, UserSpecificationsBuilder userSpecificationsBuilder) {
@@ -118,7 +115,7 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     }
 
     @Override
-    protected User createEntity(User entity) {
+    protected User createEntity(User entity, UserRequest request) {
         if (userService.isUnique( entity )) {
             return getService().create(entity);
         }
@@ -131,7 +128,7 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     }
 
     @Override
-    protected User updateEntity(User entity) {
+    protected User updateEntity(User entity, UserRequest request) {
         if (userService.isUnique( entity )) {
             return getService().update( entity );
         }
@@ -139,7 +136,7 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     }
 
     @Override
-    protected User patchEntity(User entity) {
-        return updateEntity(entity);
+    protected User patchEntity(User entity, Map<String, Object> request) {
+        return updateEntity(entity, null);
     }
 }

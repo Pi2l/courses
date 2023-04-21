@@ -21,7 +21,7 @@ public class Course implements Identity<Long> {
     private String description;
 
     @Column(name = "lesson_count")
-    Integer lessonCount;
+    private Integer lessonCount;
  
 
     public Long getId() {

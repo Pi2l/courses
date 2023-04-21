@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.course;
 
+import org.hibernate.validator.constraints.Range;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Course;
 
@@ -14,6 +15,7 @@ public class CourseRequest extends AbstractRequest<Course> {
 
     private String description;
 
+    @Range(min = 1)
     private Integer lessonCount;
 
     @Override

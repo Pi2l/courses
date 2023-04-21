@@ -71,7 +71,7 @@ public abstract class AbstractController<
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Response create(@Validated({ CreateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
-        Entity createdEntity = createEntity( requestBody.createEntity() );
+        Entity createdEntity = createEntity( requestBody.createEntity(), requestBody );
 
         return convertToResponse( createdEntity );
     }
@@ -81,7 +81,7 @@ public abstract class AbstractController<
     public Response update(@PathVariable Long id, @Validated({ UpdateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
         Entity entity = getEntity(id);
 
-        Entity updatedEntity = updateEntity( requestBody.updateEntity(entity) );
+        Entity updatedEntity = updateEntity( requestBody.updateEntity(entity), requestBody );
         return convertToResponse( updatedEntity );
     }
 
@@ -92,7 +92,7 @@ public abstract class AbstractController<
 
         entity = patchRequest( requestBody, entity );
 
-        Entity updatedEntity = patchEntity( entity );
+        Entity updatedEntity = patchEntity( entity, requestBody );
         return convertToResponse( updatedEntity );
     }
 
@@ -112,15 +112,15 @@ public abstract class AbstractController<
         return entity;
     }
 
-    protected Entity updateEntity(Entity entity) {
+    protected Entity updateEntity(Entity entity, Request request) {
         return getService().update( entity );
     }
 
-    protected Entity patchEntity(Entity entity) {
+    protected Entity patchEntity(Entity entity, Map<String, Object> request) {
         return getService().update( entity );
     }
 
-    protected Entity createEntity(Entity entity) {
+    protected Entity createEntity(Entity entity, Request request) {
         return getService().create( entity );
     }
 

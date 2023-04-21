@@ -2,13 +2,13 @@ package org.m.courses.api.v1.course;
 
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.common.AbstractControllerTest;
+import org.m.courses.api.v1.controller.course.CourseController;
 import org.m.courses.api.v1.controller.course.CourseRequest;
 import org.m.courses.api.v1.controller.course.CourseResponse;
 import org.m.courses.builder.CourseBuilder;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
-import org.m.courses.filtering.UserSpecificationsBuilder;
 import org.m.courses.model.Course;
 import org.m.courses.model.User;
 import org.m.courses.service.CourseService;
@@ -31,7 +31,7 @@ import static org.m.courses.filtering.FilteringOperation.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-@WebMvcTest
+@WebMvcTest(CourseController.class)
 public class CourseControllerTest extends AbstractControllerTest<Course, CourseRequest, CourseResponse> {
 
     @MockBean
@@ -42,9 +42,6 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
     @MockBean
     private UserService userService;
-
-    @MockBean
-    private UserSpecificationsBuilder userEntitySpecificationsBuilder;
 
     @Override
     protected String getControllerPath() {
@@ -92,7 +89,17 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     protected Map<Consumer<CourseRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
         Map<Consumer<CourseRequest>, Pair<String, String>> wrongValues = new HashMap<>();
 
+        wrongValues.put(request -> {
+            when( userService.get( anyLong() ) ).thenReturn(null);
+            request.setTeacherId(834L);
+        }, Pair.of("cause", "teacher not found with id = 834") );
+
         setupWrongValues( wrongValues );
+        wrongValues.put(request -> {
+            mockGetTeacher();
+            request.setLessonCount(0);
+        }, Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
+
         return wrongValues;
     }
 
@@ -104,11 +111,8 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
     @Override
     protected Map<Consumer<CourseRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
-        Map<Consumer<CourseRequest>, Pair<String, String>> wrongValues = new HashMap<>();
 
-        setupWrongValues(wrongValues);
-
-        return wrongValues;
+        return getCreateWithWrongValuesTestParameters();
     }
 
     @Override
@@ -118,7 +122,7 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
         User teacher = UserBuilder.builder().build();
         map.put(
-                Map.of("teacher", teacher.getId()),
+                Map.of("teacherId", teacher.getId()),
                 Pair.of( Course::getTeacher, teacher ) );
 
         map.put(
@@ -147,6 +151,8 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
     private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
         setupBlankField(map, "name");
+        map.put(Map.of("teacherId", 834L), Pair.of("cause", "teacher not found with id = 834") );
+        map.put(Map.of("lessonCount", 0), Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
     }
 
     private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
@@ -184,18 +190,6 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
             teacher.setId( teacherId );
             return teacher;
         } );
-    }
-
-    @Override
-    protected Map< Consumer< CourseRequest >, Pair< Function<Course, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
-        Map<Consumer<CourseRequest>, Pair<Function<Course, Object>, Object>> optionalValues = new HashMap<>();
-
-        return optionalValues;
-    }
-
-    @Override
-    protected Map<Consumer<CourseRequest>, Pair<Function<Course, Object>, Object>> getUpdateWithOptionalValuesTestParameters() {
-        return getCreateWithOptionalValuesTestParameters();
     }
 
     @Override
@@ -259,7 +253,7 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     protected Map< String, String > getInvalidFilteringTestParams() {
         Map< String, String > map = new HashMap<>();
 
-        map.put("fn=firstName1", "Operation 'EQUAL' is not supported for property firstName");
+        map.put("fn=firstName1", "");
 
         return map;
     }
