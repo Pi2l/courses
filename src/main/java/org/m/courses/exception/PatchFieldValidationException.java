@@ -1,7 +1,5 @@
 package org.m.courses.exception;
 
-import org.m.courses.api.v1.controller.user.UserRequest;
-
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.Set;

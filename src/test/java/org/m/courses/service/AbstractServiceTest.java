@@ -5,17 +5,15 @@ import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
-import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.model.Identity;
 import org.m.courses.model.Role;
-import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AbstractServiceTest<Entity extends Identity<Long>> extends Autologinable {
 
-    @Autowired private UserBuilder userBuilder;
+    @Autowired protected UserBuilder userBuilder;
 
     @AfterEach
     void clearDB() {

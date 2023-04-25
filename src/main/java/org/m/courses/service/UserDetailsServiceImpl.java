@@ -1,12 +1,11 @@
 package org.m.courses.service;
 
 import org.m.courses.dao.UserDao;
-import org.m.courses.model.User;
 import org.m.courses.model.SpringUser;
+import org.m.courses.model.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

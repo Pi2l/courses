@@ -45,7 +45,11 @@ public class SearchCriteria {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SearchCriteria that = (SearchCriteria) o;
-        return Objects.equals(key, that.key) && Objects.equals(operation, that.operation) && Objects.equals(value, that.value);
+
+        if (getKey() != null ? !getKey().equals(that.getKey()) : that.getKey() != null) return false;
+        if (getOperation() != null ? !getOperation().equals(that.getOperation()) : that.getOperation() != null)
+            return false;
+        return getValue() != null ? getValue().equals(that.getValue()) : that.getValue() == null;
     }
 
     @Override

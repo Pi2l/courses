@@ -59,18 +59,6 @@ public class UserAuthorizationService {
         return false;
     }
 
-    private List<String> getSpringRoles() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            throw new UserUnauthenticatedException();
-        }
-        Collection<? extends GrantedAuthority> roles = authentication.getAuthorities();
-
-        return roles.stream()
-                .map( role -> role.getAuthority().substring("ROLE_".length()) )
-                .collect(Collectors.toList());
-    }
-
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {

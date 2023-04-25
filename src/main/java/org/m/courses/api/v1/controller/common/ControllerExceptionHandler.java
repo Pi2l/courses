@@ -1,9 +1,6 @@
 package org.m.courses.api.v1.controller.common;
 
-import org.m.courses.exception.IllegalFilteringOperationException;
-import org.m.courses.exception.ItemNotFoundException;
-import org.m.courses.exception.PatchFieldValidationException;
-import org.m.courses.exception.UniqueFieldViolationException;
+import org.m.courses.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -25,8 +22,26 @@ public class ControllerExceptionHandler {
 
     @ExceptionHandler(ItemNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    String handler(RuntimeException exception) {
-        return exception.getMessage();
+    Map<String, String> handler(RuntimeException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    Map<String, String> handler(AccessDeniedException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    Map<String, String> handler(IllegalArgumentException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -61,13 +76,23 @@ public class ControllerExceptionHandler {
 
         validationErrorsMap.put("filtering", exception.getMessage());
 
-        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(UserUnauthenticatedException.class)
+    ResponseEntity<Object> handlerValidationException(UserUnauthenticatedException exception) {
+        Map<String, String> validationErrorsMap = new HashMap<>();
+
+        validationErrorsMap.put("", exception.getMessage());
+
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(PatchFieldValidationException.class)
     ResponseEntity<Object> handlerPatchValidationException(PatchFieldValidationException exception) {
         Set<? extends ConstraintViolation<?>> validationErrorsSet = exception.getValidationViolations();
         Map<String, Object> validationErrorsMap = getStringObjectMap(validationErrorsSet);
-        return new ResponseEntity<>(validationErrorsMap, HttpStatus.NOT_ACCEPTABLE);
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.BAD_REQUEST);
     }
 
     private Map<String, Object> getStringObjectMap(Set<? extends ConstraintViolation<?>> validationErrorsSet) {
@@ -79,7 +104,7 @@ public class ControllerExceptionHandler {
         return validationErrorsMap;
     }
 
-    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Throwable.class)
     String handlerAll(Throwable exception) {
         return exception.getMessage();

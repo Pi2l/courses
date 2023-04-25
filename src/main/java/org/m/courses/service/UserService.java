@@ -6,7 +6,6 @@ import org.m.courses.model.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Service
@@ -47,6 +46,8 @@ public class UserService extends AbstractService<User> {
             } else {
                 user.setPassword( passwordEncoder.encode( user.getPassword() ) );
             }
+        } else {
+            return super.update( null );
         }
 
         return super.update( user );

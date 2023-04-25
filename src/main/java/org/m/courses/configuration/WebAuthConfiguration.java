@@ -1,7 +1,6 @@
 package org.m.courses.configuration;
 
 
-import org.m.courses.model.Role;
 import org.m.courses.service.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
