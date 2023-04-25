@@ -58,14 +58,14 @@ public class CourseController extends AbstractController<Course, CourseRequest, 
     }
 
     private User getTeacher(Long teacherId) {
-        User user = null;
         if (teacherId != null) {
-            user = userService.get( teacherId );
+            User user = userService.get( teacherId );
             if (user == null) {
                 throw new ItemNotFoundException("teacher not found with id = " + teacherId );
             }
+            return user;
         }
-        return user;
+        return null;
     }
 
     @Override

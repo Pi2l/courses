@@ -24,6 +24,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -32,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -134,6 +136,51 @@ public abstract class AbstractControllerTest<
     }
 
     @Test
+    public void createServiceIllegalArgumentExceptionTest() {
+        getCreateServiceIllegalArgumentExceptionTest().forEach( this::doCreateServiceIllegalArgumentException );
+    }
+
+    private void doCreateServiceIllegalArgumentException(Pair<Runnable, ResultMatcher> status, Pair<String, Supplier<Object>> causeProvider) {
+
+        status.getFirst().run();
+
+        try {
+            mockMvc.perform( post( getControllerPath() )
+                            .content( getJson( convertToRequest( getNewEntity() ) ) )
+                            .contentType( MediaType.APPLICATION_JSON )
+                            .accept( MediaType.APPLICATION_JSON ) )
+                    .andExpect( status.getSecond() )
+                    .andExpect( jsonPath( causeProvider.getFirst() )
+                            .value( causeProvider.getSecond().get() ) );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void updateServiceIllegalArgumentExceptionTest() {
+        getUpdateServiceIllegalArgumentExceptionTest().forEach( this::doUpdateServiceIllegalArgumentException );
+    }
+
+    private void doUpdateServiceIllegalArgumentException(Pair<Runnable, ResultMatcher> status, Pair<String, Supplier<Object>> causeProvider) {
+
+        status.getFirst().run();
+
+        try {
+            mockMvc.perform( put( getControllerPath() + "/{id}", anyLong() )
+                            .content( getJson( convertToRequest( getNewEntity() ) ) )
+                            .contentType( MediaType.APPLICATION_JSON )
+                            .accept( MediaType.APPLICATION_JSON ) )
+                    .andDo( print() )
+                    .andExpect( status.getSecond() )
+                    .andExpect( jsonPath( causeProvider.getFirst() )
+                            .value( causeProvider.getSecond().get() ) );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void updateInvalidEntityTest() {
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
@@ -164,7 +211,7 @@ public abstract class AbstractControllerTest<
         getPatchValuesTestParameters().forEach( this::doPatchValuesTestParameters );
     }
 
-    private void doPatchValuesTestParameters(Map<String, Object> requestedMap, Pair<Function<Entity, Object>, Object> valueProvider) {
+    private void doPatchValuesTestParameters(Map<String, Object> requestedMap, Pair<Function<Entity, Object>, Supplier<Object>> valueProvider) {
         Entity entity = getNewEntity();
         whenGetEntity( any( Long.class ), entity );
 
@@ -178,7 +225,7 @@ public abstract class AbstractControllerTest<
                     .andDo(print())
                     .andExpect( status().isNoContent() );
 
-            assertEquals(valueProvider.getSecond(), valueProvider.getFirst().apply( resultCaptor.getResult() ));
+            assertEquals(valueProvider.getSecond().get(), valueProvider.getFirst().apply( resultCaptor.getResult() ));
 
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -570,7 +617,7 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
-    protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Object> > getPatchValuesTestParameters();
+    protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Supplier<Object>> > getPatchValuesTestParameters();
 
     protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
 
@@ -581,6 +628,9 @@ public abstract class AbstractControllerTest<
     protected Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getUpdateWithOptionalValuesTestParameters() {
         return new HashMap<>();
     }
+    protected abstract Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getCreateServiceIllegalArgumentExceptionTest();
+
+    protected abstract Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getUpdateServiceIllegalArgumentExceptionTest();
 
     protected abstract Map< List<String>, Sort> getSortingTestParams();
 

@@ -7,8 +7,11 @@ import org.m.courses.api.v1.controller.user.UserController;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.filtering.UserSpecificationsBuilder;
+import org.m.courses.model.Course;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.UserService;
@@ -17,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,12 +28,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 import static org.m.courses.filtering.FilteringOperation.EQUAL;
 import static org.m.courses.filtering.FilteringOperation.NOT_EQUAL;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest( UserController.class )
 public class UserControllerTest extends AbstractControllerTest<User, UserRequest, UserResponse> {
@@ -156,32 +164,58 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<Function<User, Object>, Object>> getPatchValuesTestParameters() {
-        Map<Map<String, Object>, Pair<Function<User, Object>, Object>> map = new HashMap<>();
+    protected Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getCreateServiceIllegalArgumentExceptionTest() {
+        Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > map = new HashMap<>();
+
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new AccessDeniedException()), status().isForbidden() ),
+                Pair.of( "cause", () -> null ) );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("entity cannot be null")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "entity cannot be null" ) );
+        return map;
+    }
+
+    private void getCreateOrUpdateThrow(Exception exception) {
+        when(userService.get( anyLong() )).thenReturn( getNewEntity() );
+        doThrow(exception)
+                .when(userService).update(any(User.class));
+        doThrow(exception)
+                .when(userService).create(any(User.class));
+    }
+
+    @Override
+    protected Map<Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>>> getUpdateServiceIllegalArgumentExceptionTest() {
+        return getCreateServiceIllegalArgumentExceptionTest();
+    }
+
+    @Override
+    protected Map<Map<String, Object>, Pair<Function<User, Object>, Supplier<Object>>> getPatchValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Function<User, Object>, Supplier<Object>>> map = new HashMap<>();
 
         map.put(
                 Map.of("firstName", "firstName1"),
-                Pair.of( User::getFirstName, "firstName1" ) );
+                Pair.of( User::getFirstName, () -> "firstName1" ) );
 
         map.put(
                 Map.of("lastName", "lastName1"),
-                Pair.of( User::getLastName, "lastName1" ) );
+                Pair.of( User::getLastName, () -> "lastName1" ) );
 
         map.put(
                 Map.of("phoneNumber", "phoneNumber1"),
-                Pair.of( User::getPhoneNumber, "phoneNumber1" ) );
+                Pair.of( User::getPhoneNumber, () -> "phoneNumber1" ) );
 
         map.put(
                 Map.of("login", "login1"),
-                Pair.of( User::getLogin, "login1" ) );
+                Pair.of( User::getLogin, () -> "login1" ) );
 
         map.put(
                 Map.of("password", "password1"),
-                Pair.of( User::getPassword, "password1" ) );
+                Pair.of( User::getPassword, () -> "password1" ) );
 
         map.put(
                 Map.of("role", Role.TEACHER),
-                Pair.of( User::getRole, Role.TEACHER ) );
+                Pair.of( User::getRole, () -> Role.TEACHER ) );
 
         return map;
     }

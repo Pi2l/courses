@@ -7,6 +7,7 @@ import org.m.courses.api.v1.controller.course.CourseRequest;
 import org.m.courses.api.v1.controller.course.CourseResponse;
 import org.m.courses.builder.CourseBuilder;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.filtering.CourseSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Course;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,11 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.COURSE_API;
 import static org.m.courses.filtering.FilteringOperation.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CourseController.class)
 public class CourseControllerTest extends AbstractControllerTest<Course, CourseRequest, CourseResponse> {
@@ -94,11 +100,12 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
             request.setTeacherId(834L);
         }, Pair.of("cause", "teacher not found with id = 834") );
 
-        setupWrongValues( wrongValues );
         wrongValues.put(request -> {
             mockGetTeacher();
             request.setLessonCount(0);
         }, Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
+
+        setupWrongValues( wrongValues );
 
         return wrongValues;
     }
@@ -116,27 +123,42 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<Function<Course, Object>, Object>> getPatchValuesTestParameters() {
+    protected Map<Map<String, Object>, Pair<Function<Course, Object>, Supplier<Object> >> getPatchValuesTestParameters() {
         mockGetTeacher();
-        Map<Map<String, Object>, Pair<Function<Course, Object>, Object>> map = new HashMap<>();
+        Map<Map<String, Object>, Pair<Function<Course, Object>, Supplier<Object>>> map = new HashMap<>();
 
         User teacher = UserBuilder.builder().build();
         map.put(
                 Map.of("teacherId", teacher.getId()),
-                Pair.of( Course::getTeacher, teacher ) );
+                Pair.of( Course::getTeacher, () -> teacher ) );
+        map.put(
+                getNullValueMap("teacherId"),
+                Pair.of( Course::getTeacher, () -> null ) );
 
         map.put(
                 Map.of("name", "name1"),
-                Pair.of( Course::getName, "name1" ) );
+                Pair.of( Course::getName, () -> "name1" ) );
 
         map.put(
                 Map.of("description", "description1"),
-                Pair.of( Course::getDescription, "description1" ) );
+                Pair.of( Course::getDescription, () -> "description1" ) );
+        map.put(
+                getNullValueMap("description"),
+                Pair.of( Course::getDescription, () -> null ) );
 
         map.put(
                 Map.of("lessonCount", 120),
-                Pair.of( Course::getLessonCount, 120 ) );
+                Pair.of( Course::getLessonCount, () -> 120 ) );
+        map.put(
+                getNullValueMap("lessonCount"),
+                Pair.of( Course::getLessonCount, () -> null ) );
 
+        return map;
+    }
+
+    private Map<String, Object> getNullValueMap(String field) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(field, null);
         return map;
     }
 
@@ -156,16 +178,14 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     }
 
     private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
-        Map<String, Object> fieldMap = new HashMap<>();
         map.put(
                 Map.of(fieldName, ""),
                 Pair.of( fieldName, "must not be blank" ) );
         map.put(
                 Map.of(fieldName, "   "),
                 Pair.of( fieldName, "must not be blank" ) );
-        fieldMap.put(fieldName, null);
         map.put(
-                fieldMap,
+                getNullValueMap(fieldName),
                 Pair.of( fieldName, "must not be blank" ) );
     }
 
@@ -182,6 +202,40 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
         mockGetTeacher();
         super.updateEntity();
     }
+
+    @Override
+    protected Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getCreateServiceIllegalArgumentExceptionTest() {
+        Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > map = new HashMap<>();
+
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new AccessDeniedException()), status().isForbidden() ),
+                Pair.of( "cause", () -> null ) );
+
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("only teacher can lead the course or it can be null")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "only teacher can lead the course or it can be null" ) );
+
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("entity cannot be null" )), status().isBadRequest() ),
+                Pair.of( "cause", () -> "entity cannot be null" ) );
+
+        return map;
+    }
+
+    @Override
+    protected Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getUpdateServiceIllegalArgumentExceptionTest() {
+        return getCreateServiceIllegalArgumentExceptionTest();
+    }
+
+    private void getCreateOrUpdateThrow(Exception exception) {
+        when( courseService.get( anyLong() ) ).thenReturn( getNewEntity() );
+        mockGetTeacher();
+        doThrow(exception)
+                .when(courseService).update(any(Course.class));
+        doThrow(exception)
+                .when(courseService).create(any(Course.class));
+    }
+    // TODO: group + schedule
 
     private void mockGetTeacher() {
         when( userService.get( anyLong() ) ).then( answer -> {
