@@ -2,6 +2,7 @@ package org.m.courses.api.v1.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
@@ -397,6 +398,7 @@ public abstract class AbstractControllerTest<
 
     protected String getJson(Object expectedEntity) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule( new JavaTimeModule() );
 
         return mapper.writeValueAsString( expectedEntity );
     }

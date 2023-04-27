@@ -24,6 +24,9 @@ public class Schedule implements Identity<Long> {
     @ManyToOne(optional = false)
     private Group group;
 
+    @Column(nullable = false, name = "time_zone")
+    private String timeZone;
+
     public Long getId() {
         return id;
     }
@@ -62,6 +65,14 @@ public class Schedule implements Identity<Long> {
 
     public void setGroup(Group group) {
         this.group = group;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 
     @Override

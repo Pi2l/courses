@@ -1,10 +1,9 @@
 package org.m.courses.dao;
 
 import org.m.courses.exception.AccessDeniedException;
-import org.m.courses.model.Group;
-import org.m.courses.model.Role;
+import org.m.courses.model.Course;
 import org.m.courses.model.Schedule;
-import org.m.courses.repository.GroupRepository;
+import org.m.courses.model.User;
 import org.m.courses.repository.PrimaryRepository;
 import org.m.courses.repository.ScheduleRepository;
 import org.m.courses.service.UserAuthorizationService;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
-import static org.springframework.data.jpa.domain.Specification.not;
 import static org.springframework.data.jpa.domain.Specification.where;
 
 @Component
@@ -46,21 +44,14 @@ public class ScheduleDao extends AbstractDao<Schedule> {
                 .orElse(null);
     }
 
-    @Override
-    public Schedule update(Schedule schedule) {
-        if ( !canModify( schedule.getId() ) ) {
-            throw new AccessDeniedException();
+    public Schedule create(Schedule entity) {
+        Course course = entity.getCourse();
+
+        if ( canModify( course ) ) {
+            return getRepository().save(entity);
         }
 
-        return getRepository().save(schedule);
-    }
-
-    @Override
-    public void delete(Long id) {
-        if ( !canModify( id ) ) {
-            throw new AccessDeniedException();
-        }
-        repository.deleteById(id);
+        throw new AccessDeniedException();
     }
 
     @Override
@@ -70,7 +61,14 @@ public class ScheduleDao extends AbstractDao<Schedule> {
 
     @Override
     protected boolean canModify(Long id) {
-        return super.canModify(id);
+        Course course = get( id ).getCourse();
+        return canModify( course );
+    }
+
+    private boolean canModify(Course course) {
+        User teacher = course == null ? null : course.getTeacher();
+        return isAdmin()
+                || teacher != null && teacher.equals(authorizationService.getCurrentUser());
     }
 
     private Specification<Schedule> buildReadOnlySpec() {
