@@ -31,6 +31,9 @@ public class User implements Identity<Long> {
     @Column(nullable = false)
     private Role role;
 
+    @ManyToOne
+    private Group group;
+
     public Long getId() {
         return id;
     }
@@ -85,6 +88,14 @@ public class User implements Identity<Long> {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     @Override

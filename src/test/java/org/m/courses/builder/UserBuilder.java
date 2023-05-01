@@ -1,6 +1,7 @@
 package org.m.courses.builder;
 
 import org.m.courses.dao.UserDao;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,7 @@ public class UserBuilder {
         setLogin("Login_" + randomValue);
         setPassword("Password_" + randomValue);
         setRole( Role.USER );
+        setGroup( null );
         return this;
     }
 
@@ -86,6 +88,11 @@ public class UserBuilder {
 
     public UserBuilder setRole(Role role) {
         user.setRole(role);
+        return this;
+    }
+
+    public UserBuilder setGroup(Group group) {
+        user.setGroup( group );
         return this;
     }
 }

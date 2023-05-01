@@ -2,6 +2,7 @@ package org.m.courses.api.v1.schedule;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.m.courses.api.v1.common.AbstractControllerTest;
+import org.m.courses.api.v1.controller.course.CourseRequest;
 import org.m.courses.api.v1.controller.schedule.ScheduleController;
 import org.m.courses.api.v1.controller.schedule.ScheduleRequest;
 import org.m.courses.api.v1.controller.schedule.ScheduleResponse;
@@ -14,7 +15,6 @@ import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.Schedule;
-import org.m.courses.model.User;
 import org.m.courses.service.CourseService;
 import org.m.courses.service.GroupService;
 import org.m.courses.service.ScheduleService;
@@ -38,8 +38,8 @@ import java.util.function.Supplier;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.SCHEDULE_API;
 import static org.m.courses.filtering.FilteringOperation.*;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,11 +61,20 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
 
     @BeforeEach
     void init() {
-        when( courseService.get( anyLong() ) )
-                .thenAnswer( answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
+        mockGetCourse();
+        mockGetGroup();
+    }
+
+    private void mockGetGroup() {
         when( groupService.get( anyLong() ) )
                 .thenAnswer( answer -> GroupBuilder.builder().setId( answer.getArgument(0) ).build() );
     }
+
+    private void mockGetCourse() {
+        when( courseService.get( anyLong() ) )
+                .thenAnswer( answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
+    }
+
     @Override
     protected String getControllerPath() {
         return SCHEDULE_API;
@@ -111,24 +120,40 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     }
 
     @Override
-    protected Map<Consumer<ScheduleRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
-        Map<Consumer<ScheduleRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map<Pair<Consumer<ScheduleRequest>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
+        Map<Pair<Consumer<ScheduleRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
 
         return wrongValues;
     }
 
-    private void setupWrongValues(Map<Consumer<ScheduleRequest>, Pair<String, String>> wrongValues) {
-        wrongValues.put( request -> request.setCourseId(null), Pair.of("courseId", "must not be null") );
-        wrongValues.put( request -> request.setGroupId(null), Pair.of("groupId", "must not be null") );
-        wrongValues.put( request -> request.setStartAt(null), Pair.of("startAt", "must not be null") );
-        wrongValues.put( request -> request.setEndAt(null), Pair.of("endAt", "must not be null") );
+    private void setupWrongValues(Map< Pair<Consumer<ScheduleRequest>, Runnable>, Pair<String, String>> wrongValues) {
+        wrongValues.put( Pair.of( req -> req.setCourseId(null), () -> {} ), Pair.of("courseId", "must not be null") );
+        wrongValues.put( Pair.of( req -> req.setGroupId(null), () -> {} ), Pair.of("groupId", "must not be null") );
+        wrongValues.put( Pair.of( req -> req.setStartAt(null), () -> {} ), Pair.of("startAt", "must not be null") );
+        wrongValues.put( Pair.of( req -> req.setEndAt(null), () -> {} ), Pair.of("endAt", "must not be null") );
+
+        Course course = CourseBuilder.builder().build();
+        wrongValues.put(
+                Pair.of( request -> {
+                            when( courseService.get( anyLong() ) ).thenReturn( null );
+                            request.setCourseId(course.getId());
+                        }, this::mockGetCourse ),
+                Pair.of( "cause", "course not found with id = " + course.getId() ) );
+
+        Group group = GroupBuilder.builder().build();
+        wrongValues.put(
+                Pair.of( request -> {
+                            when( groupService.get( anyLong() ) ).thenReturn( null );
+                            request.setGroupId(group.getId());
+                        }, this::mockGetGroup ),
+                Pair.of( "cause", "group not found with id = " + group.getId() ) );
     }
 
     @Override
-    protected Map<Consumer<ScheduleRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
-        Map<Consumer<ScheduleRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map< Pair<Consumer<ScheduleRequest>, Runnable>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
+        Map< Pair<Consumer<ScheduleRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
 
@@ -200,7 +225,22 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
 
         getPatchInvalidValues(map);
 
+        getCreateOrUpdateReturnNull();
+        Course course = CourseBuilder.builder().build();
+        map.put(
+                Map.of("courseId", course.getId()),
+                Pair.of( "cause", "course not found with id = " + course.getId() ) );
+
+        Group group = GroupBuilder.builder().build();
+        map.put(
+                Map.of("groupId", group.getId()),
+                Pair.of( "cause", "group not found with id = " + group.getId() ) );
         return map;
+    }
+
+    private void getCreateOrUpdateReturnNull() {
+        when( courseService.get( anyLong() ) ).thenReturn( null );
+        when( groupService.get( anyLong() ) ).thenReturn( null );
     }
 
     private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {

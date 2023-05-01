@@ -1,6 +1,8 @@
 package org.m.courses.api.v1.controller.user;
 
 import org.m.courses.api.v1.controller.common.AbstractResponse;
+import org.m.courses.api.v1.controller.group.GroupResponse;
+import org.m.courses.model.Group;
 import org.m.courses.model.User;
 
 public class UserResponse extends AbstractResponse {
@@ -15,6 +17,8 @@ public class UserResponse extends AbstractResponse {
 
     private String role;
 
+    private GroupResponse group;
+
     public UserResponse(User user) {
         super( user.getId() );
         this.firstName = user.getFirstName();
@@ -22,5 +26,10 @@ public class UserResponse extends AbstractResponse {
         this.phoneNumber = user.getPhoneNumber();
         this.login = user.getLogin();
         this.role = user.getRole().name();
+
+        Group group = user.getGroup();
+        if (group != null) {
+            this.group = new GroupResponse( group );
+        }
     }
 }

@@ -2,13 +2,16 @@ package org.m.courses.api.v1.controller.user;
 
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
+import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
 import org.m.courses.exception.UniqueFieldViolationException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
 import org.m.courses.filtering.UserSpecificationsBuilder;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
+import org.m.courses.service.GroupService;
 import org.m.courses.service.UserService;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,12 +31,14 @@ import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 public class UserController extends AbstractController<User, UserRequest, UserResponse> {
 
     private final UserService userService;
+    private final GroupService groupService;
     private final Validator validator;
     private final ConversionService conversionService;
     private final UserSpecificationsBuilder userSpecificationsBuilder;
 
-    public UserController(UserService userService, ConversionService conversionService, Validator validator, UserSpecificationsBuilder userSpecificationsBuilder) {
+    public UserController(UserService userService, GroupService groupService, ConversionService conversionService, Validator validator, UserSpecificationsBuilder userSpecificationsBuilder) {
         this.userService = userService;
+        this.groupService = groupService;
         this.validator = validator;
         this.conversionService = conversionService;
         this.userSpecificationsBuilder = userSpecificationsBuilder;
@@ -85,6 +90,13 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
                 validateField("role", role);
                 user.setRole( role );
                 return;
+            case "groupId":
+                Long groupId = conversionService.convert(field.getValue(), Long.class);
+                validateField("groupId", groupId);
+
+                Group group = getGroup(groupId);
+                user.setGroup( group );
+                return;
             default:
                 throw new IllegalArgumentException();
         }
@@ -116,6 +128,8 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
 
     @Override
     protected User createEntity(User entity, UserRequest request) {
+        setGroup(entity, request);
+
         if (userService.isUnique( entity )) {
             return getService().create(entity);
         }
@@ -129,14 +143,36 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
 
     @Override
     protected User updateEntity(User entity, UserRequest request) {
-        if (userService.isUnique( entity )) {
-            return getService().update( entity );
+        setGroup(entity, request);
+
+        return updateUser(entity);
+    }
+
+    private User updateUser(User entity) {
+        if (userService.isUnique(entity)) {
+            return getService().update(entity);
         }
         throw new UniqueFieldViolationException("login");
     }
 
+    private void setGroup(User entity, UserRequest request) {
+        Group group = getGroup( request.getGroupId() );
+        entity.setGroup( group );
+    }
+
+    private Group getGroup(Long groupId) {
+        if (groupId != null) {
+            Group group = groupService.get( groupId );
+            if (group == null) {
+                throw new ItemNotFoundException("group not found with id = " + groupId );
+            }
+            return group;
+        }
+        return null;
+    }
+
     @Override
     protected User patchEntity(User entity, Map<String, Object> request) {
-        return updateEntity(entity, null);
+        return updateUser(entity);
     }
 }

@@ -1,19 +1,19 @@
 package org.m.courses.api.v1.user;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.user.UserController;
 import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.api.v1.controller.user.UserResponse;
+import org.m.courses.builder.GroupBuilder;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.exception.AccessDeniedException;
-import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.filtering.UserSpecificationsBuilder;
-import org.m.courses.model.Course;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
+import org.m.courses.service.GroupService;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -45,12 +45,25 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private GroupService groupService;
+
     @SpyBean
     private UserSpecificationsBuilder userEntitySpecificationsBuilder;
 
     @BeforeEach
     private void init() {
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(true);
+        mockIsUnique(true);
+        mockGetGroup();
+    }
+
+    private void mockIsUnique(boolean value) {
+        when( getService().isUnique( any( getEntityClass() ) ) ).thenReturn(value);
+    }
+
+    private void mockGetGroup() {
+        when( groupService.get( anyLong() ) )
+                .thenAnswer( answer -> GroupBuilder.builder().setId( answer.getArgument(0) ).build() );
     }
 
     @Override
@@ -65,7 +78,9 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
 
     @Override
     protected User getNewEntity() {
-        return UserBuilder.builder().build();
+        return UserBuilder.builder()
+                .setGroup(GroupBuilder.builder().build())
+                .build();
     }
 
     @Override
@@ -88,75 +103,86 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
         valuesToBeUpdated.add(User::getLogin);
         valuesToBeUpdated.add(User::getPassword);
         valuesToBeUpdated.add(User::getRole);
-//        Roles?
+        valuesToBeUpdated.add(User::getGroup);
 
         return valuesToBeUpdated;
     }
 
     @Override
-    protected Map<Consumer<UserRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
-        Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map<Pair<Consumer<UserRequest>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
+        Map<Pair<Consumer<UserRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
-        wrongValues.put(userRequest -> userRequest.setPassword(null), Pair.of("password", "must not be blank") );
-        wrongValues.put(userRequest -> userRequest.setPassword(""), Pair.of("password", "must not be blank") );
-        wrongValues.put(userRequest -> userRequest.setPassword("   "), Pair.of("password", "must not be blank") );
+        wrongValues.put(Pair.of(userRequest -> userRequest.setPassword(null), () -> {}), Pair.of("password", "must not be blank") );
+        wrongValues.put(Pair.of(userRequest -> userRequest.setPassword(""), () -> {}), Pair.of("password", "must not be blank") );
+        wrongValues.put(Pair.of(userRequest -> userRequest.setPassword("   "), () -> {}), Pair.of("password", "must not be blank") );
 
         return wrongValues;
     }
 
-    private void setupWrongValues(Map<Consumer<UserRequest>, Pair<String, String>> wrongValues) {
+    private void setupWrongValues(Map<Pair<Consumer<UserRequest>, Runnable>, Pair<String, String>> wrongValues) {
         wrongValues.put(
-            userRequest -> userRequest.setFirstName(null),
+            Pair.of( userRequest -> userRequest.setFirstName(null), () -> {}),
             Pair.of("firstName", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setFirstName(""),
+            Pair.of( userRequest -> userRequest.setFirstName(""), () -> {}),
             Pair.of("firstName", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setFirstName("   "),
+            Pair.of( userRequest -> userRequest.setFirstName("   "), () -> {}),
             Pair.of("firstName", "must not be blank") );
 
         wrongValues.put(
-            userRequest -> userRequest.setLastName(null),
+            Pair.of( userRequest -> userRequest.setLastName(null), () -> {}),
             Pair.of("lastName", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setLastName(""),
+            Pair.of( userRequest -> userRequest.setLastName(""), () -> {}),
             Pair.of("lastName", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setLastName("   "),
+            Pair.of( userRequest -> userRequest.setLastName("   "), () -> {}),
             Pair.of("lastName", "must not be blank") );
 
         wrongValues.put(
-            userRequest -> userRequest.setPhoneNumber(null),
+            Pair.of( userRequest -> userRequest.setPhoneNumber(null), () -> {}),
             Pair.of("phoneNumber", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setPhoneNumber(""),
+            Pair.of( userRequest -> userRequest.setPhoneNumber(""), () -> {}),
             Pair.of("phoneNumber", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setPhoneNumber("   "),
+            Pair.of( userRequest -> userRequest.setPhoneNumber("   "), () -> {}),
             Pair.of("phoneNumber", "must not be blank") );
         wrongValues.put(
-            userRequest -> userRequest.setPhoneNumber("12345678901234567890123456789012345678901"),
+            Pair.of( userRequest -> userRequest.setPhoneNumber("12345678901234567890123456789012345678901"), () -> {}),
             Pair.of("phoneNumber", "size must be between 0 and 20") );
 
         wrongValues.put(
-            userRequest -> userRequest.setLogin(null),
+            Pair.of( userRequest -> userRequest.setLogin(null), () -> {}),
             Pair.of("login", "must not be blank") );
         wrongValues.put(
-            userRequest -> {
-                when(getService().isUnique( any( getEntityClass() ) )).thenReturn(false);
-                userRequest.setLogin("login");
-            },
+            Pair.of(
+                    userRequest -> {
+                        mockIsUnique(false);
+                        userRequest.setLogin("login");
+                    },
+                    () -> mockIsUnique(true) ),
             Pair.of("login", "must be unique") );//unqinue
 
         wrongValues.put(
-            userRequest -> userRequest.setRole(null),
+            Pair.of( userRequest -> userRequest.setRole(null), () -> {}),
             Pair.of("role", "must not be null") );
+
+        Group group = GroupBuilder.builder().build();
+        wrongValues.put(
+            Pair.of(
+                    request -> {
+                        when( groupService.get( anyLong() ) ).thenReturn( null );
+                        request.setGroupId(group.getId());
+                    }, this::mockGetGroup),
+                Pair.of( "cause", "group not found with id = " + group.getId() ) );
     }
 
     @Override
-    protected Map<Consumer<UserRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
-        Map<Consumer<UserRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map<Pair<Consumer<UserRequest>, Runnable>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
+        Map<Pair<Consumer<UserRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
 
@@ -217,13 +243,17 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
                 Map.of("role", Role.TEACHER),
                 Pair.of( User::getRole, () -> Role.TEACHER ) );
 
+        Group group = GroupBuilder.builder().build();
+        map.put(
+                Map.of("groupId", group.getId().toString()),
+                Pair.of( User::getGroup, () -> group ) );
         return map;
     }
 
     @Override
     protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
         Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
-        when(getService().isUnique( any( getEntityClass() ) )).thenReturn(false);
+        mockIsUnique(false);
 
         getPatchInvalidValues(map);
 
@@ -250,6 +280,12 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
         map.put(
                 roleMap,
                 Pair.of( "role", "must not be null" ) );
+
+        when( groupService.get( anyLong() ) ).thenReturn( null );
+        Group group = GroupBuilder.builder().build();
+        map.put(
+                Map.of("groupId", group.getId()),
+                Pair.of( "cause", "group not found with id = " + group.getId() ) );
     }
 
     private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
@@ -265,19 +301,6 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
                 fieldMap,
                 Pair.of( fieldName, "must not be blank" ) );
     }
-
-    @Test
-    @Override
-    public void updateEntity() throws Exception {
-        super.updateEntity();
-    }
-
-    @Test
-    @Override
-    public void createEntityTest() throws Exception {
-        super.createEntityTest();
-    }
-
 
     @Override
     protected Map< Consumer< UserRequest >, Pair< Function<User, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
@@ -310,6 +333,9 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
         map.put( List.of("role"), Sort.by(Sort.Direction.ASC, "role") );
         map.put( List.of("role,desc"), Sort.by(Sort.Direction.DESC, "role") );
 
+        map.put( List.of("groupId"), Sort.by(Sort.Direction.ASC, "groupId") );
+        map.put( List.of("groupId,desc"), Sort.by(Sort.Direction.DESC, "groupId") );
+
         return map;
     }
 
@@ -341,6 +367,11 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
                         List.of(
                             new SearchCriteria("role", EQUAL, Role.USER),
                             new SearchCriteria("role", NOT_EQUAL, Role.ADMIN) ) );
+
+        map.put(List.of("groupId=1", "groupId!=2"),
+                List.of(
+                        new SearchCriteria("groupId", EQUAL, 1L),
+                        new SearchCriteria("groupId", NOT_EQUAL, 2L) ) );
         return map;
     }
 

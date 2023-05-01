@@ -78,23 +78,23 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     }
 
     @Override
-    protected Map<Consumer<GroupRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
-        Map<Consumer<GroupRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map<Pair<Consumer<GroupRequest>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
+        Map< Pair<Consumer<GroupRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
 
         return wrongValues;
     }
 
-    private void setupWrongValues(Map<Consumer<GroupRequest>, Pair<String, String>> wrongValues) {
-        wrongValues.put( request -> request.setName("   "), Pair.of("name", "must not be blank") );
-        wrongValues.put( request -> request.setName(null), Pair.of("name", "must not be blank") );
-        wrongValues.put( request -> request.setName(""), Pair.of("name", "must not be blank") );
+    private void setupWrongValues(Map<Pair<Consumer<GroupRequest>, Runnable>, Pair<String, String>> wrongValues) {
+        wrongValues.put( Pair.of( req -> req.setName("   "), () -> {}), Pair.of("name", "must not be blank") );
+        wrongValues.put( Pair.of( req -> req.setName(null), () -> {}), Pair.of("name", "must not be blank") );
+        wrongValues.put( Pair.of( req -> req.setName(""), () -> {}), Pair.of("name", "must not be blank") );
     }
 
     @Override
-    protected Map<Consumer<GroupRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
-        Map<Consumer<GroupRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map<Pair<Consumer<GroupRequest>, Runnable>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
+        Map<Pair<Consumer<GroupRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
         setupWrongValues(wrongValues);
 

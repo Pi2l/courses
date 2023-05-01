@@ -1,11 +1,13 @@
 package org.m.courses.api.v1.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.api.v1.controller.common.PageResponse;
+import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
@@ -68,17 +70,7 @@ public abstract class AbstractControllerTest<
     }
 
     @Autowired
-    protected void setConverters( HttpMessageConverter< Object >[] converters ) {
-        mappingJackson2HttpMessageConverter = Stream.of( converters )
-                .filter( hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().get();
-    }
-
-    protected String getJson(Object expectedEntity) throws IOException {
-        MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-        mappingJackson2HttpMessageConverter.write( expectedEntity, MediaType.APPLICATION_JSON, mockHttpOutputMessage );
-
-        return mockHttpOutputMessage.getBodyAsString();
-    }
+    private ObjectMapper mapper;
 
     protected abstract AbstractService<Entity> getService();
 
@@ -87,6 +79,10 @@ public abstract class AbstractControllerTest<
     protected abstract Class<Entity> getEntityClass();
 
     protected abstract Entity getNewEntity();
+
+    private String getJson(Object object) throws JsonProcessingException {
+        return mapper.writeValueAsString( object );
+    }
 
     @Test
     public void getExistingEntityByIdTest() throws Exception {
@@ -135,9 +131,9 @@ public abstract class AbstractControllerTest<
         getCreateWithWrongValuesTestParameters().forEach( this::doCreateWithWrongValuesTestParameters );
     }
 
-    private void doCreateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
+    private void doCreateWithWrongValuesTestParameters(Pair< Consumer<Request>, Runnable > invalidValue, Pair<String, String> errorMsg) {
         Request request = convertToRequest(getNewEntity());
-        invalidValue.accept(request);
+        invalidValue.getFirst().accept(request);
         try {
             mockMvc.perform(post(getControllerPath())
                             .content(getJson(request))
@@ -149,6 +145,7 @@ public abstract class AbstractControllerTest<
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        invalidValue.getSecond().run();
     }
 
     @Test
@@ -203,11 +200,11 @@ public abstract class AbstractControllerTest<
         getUpdateWithWrongValuesTestParameters().forEach( this::doUpdateWithWrongValuesTestParameters );
     }
 
-    private void doUpdateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
+    private void doUpdateWithWrongValuesTestParameters(Pair< Consumer<Request>, Runnable> invalidValue, Pair<String, String> errorMsg) {
         Entity entity = getNewEntity();
         whenGetEntity(any(Long.class), entity);
         Request request = convertToRequest( entity );
-        invalidValue.accept(request);
+        invalidValue.getFirst().accept(request);
 
         try {
             mockMvc.perform( put( getControllerPath() + "/{id}", entity.getId() )
@@ -220,6 +217,7 @@ public abstract class AbstractControllerTest<
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        invalidValue.getSecond().run();
     }
 
     @Test
@@ -623,9 +621,9 @@ public abstract class AbstractControllerTest<
 
     protected abstract List<Function<Entity, Object>> getValueToBeUpdated();
 
-    protected abstract Map<Consumer<Request>, Pair<String, String>> getCreateWithWrongValuesTestParameters();
+    protected abstract Map< Pair<Consumer<Request>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters();
 
-    protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
+    protected abstract Map< Pair<Consumer<Request>, Runnable>, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
     protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Supplier<Object>> > getPatchValuesTestParameters();
 
