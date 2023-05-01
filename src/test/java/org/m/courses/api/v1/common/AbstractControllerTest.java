@@ -1,8 +1,6 @@
 package org.m.courses.api.v1.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
@@ -23,6 +21,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -30,17 +31,17 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -52,6 +53,7 @@ public abstract class AbstractControllerTest<
         Response extends AbstractResponse
         > {
 
+    private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
     protected MockMvc mockMvc;
 
     @Autowired
@@ -63,6 +65,19 @@ public abstract class AbstractControllerTest<
     public void setUp() {
         resultCaptor = new ResultCaptor<>();
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+    @Autowired
+    protected void setConverters( HttpMessageConverter< Object >[] converters ) {
+        mappingJackson2HttpMessageConverter = Stream.of( converters )
+                .filter( hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().get();
+    }
+
+    protected String getJson(Object expectedEntity) throws IOException {
+        MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
+        mappingJackson2HttpMessageConverter.write( expectedEntity, MediaType.APPLICATION_JSON, mockHttpOutputMessage );
+
+        return mockHttpOutputMessage.getBodyAsString();
     }
 
     protected abstract AbstractService<Entity> getService();
@@ -394,13 +409,6 @@ public abstract class AbstractControllerTest<
             entity.setId( getRandomId() );
             resultCaptor.setResult(entity);
             return entity;});
-    }
-
-    protected String getJson(Object expectedEntity) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule( new JavaTimeModule() );
-
-        return mapper.writeValueAsString( expectedEntity );
     }
 
     @Test

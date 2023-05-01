@@ -9,10 +9,7 @@ import org.m.courses.filtering.ScheduleSpecificationsBuilder;
 import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.Schedule;
-import org.m.courses.service.AbstractService;
-import org.m.courses.service.CourseService;
-import org.m.courses.service.GroupService;
-import org.m.courses.service.ScheduleService;
+import org.m.courses.service.*;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -66,15 +65,17 @@ public class ScheduleController extends AbstractController<Schedule, ScheduleReq
                 return;
 
             case "startAt":
-                ZonedDateTime startAt = conversionService.convert(field.getValue(), ZonedDateTime.class);
-                validateField("startAt", startAt);
-                entity.setStartAt( startAt );
+                ZonedDateTime startAtLocal = conversionService.convert(field.getValue(), ZonedDateTime.class);
+                validateField("startAt", startAtLocal);
+
+                entity.setStartAt( startAtLocal );
                 return;
 
             case "endAt":
-                ZonedDateTime endAt = conversionService.convert(field.getValue(), ZonedDateTime.class);
-                validateField("endAt", endAt);
-                entity.setStartAt( endAt );
+                ZonedDateTime endAtLocal = conversionService.convert(field.getValue(), ZonedDateTime.class);
+                validateField("endAt", endAtLocal);
+
+                entity.setEndAt( endAtLocal );
                 return;
 
             case "groupId":
