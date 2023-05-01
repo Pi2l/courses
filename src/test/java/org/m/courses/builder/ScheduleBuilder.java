@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 
@@ -57,7 +56,6 @@ public class ScheduleBuilder {
         ZonedDateTime startAt = ZonedDateTime.now().plusMinutes( randomValue );
         setStartAt( startAt );
         setEndAt( startAt.plusMinutes(randomValue) );
-        setTimeZone( ZoneId.of("Europe/Kyiv") );
         return this;
     }
 
@@ -83,11 +81,6 @@ public class ScheduleBuilder {
 
     public ScheduleBuilder setEndAt(ZonedDateTime endAt) {
         schedule.setEndAt(endAt);
-        return this;
-    }
-
-    public ScheduleBuilder setTimeZone(ZoneId zoneId) {
-        schedule.setTimeZone( zoneId.toString() );
         return this;
     }
 }

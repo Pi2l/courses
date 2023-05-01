@@ -9,8 +9,9 @@ import org.m.courses.model.Schedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.zone.ZoneRulesException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,25 +66,37 @@ public class ScheduleServiceTest extends AbstractServiceTest<Schedule> {
     @Test
     void createScheduleWithValidTimeZone() {
         Schedule schedule = buildNewEntity();
-        schedule.setTimeZone("Europe/Kyiv");
 
         Schedule createdEntity = scheduleService.create( schedule );
 
         assertNotNull( getService().get( schedule.getId() ) );
         assertEquals( createdEntity, schedule );
-        assertEquals( createdEntity.getTimeZone(), schedule.getTimeZone() );
     }
 
     @Test
-    void createScheduleWithInvalidTimeZone() {
+    void createScheduleWithinDiffTimeZones() {
         Schedule schedule = buildNewEntity();
-        schedule.setTimeZone("dwe");
+        LocalDateTime localNow = LocalDateTime.now();
+        schedule.setStartAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Kyiv") ).plusHours(2) );
+        schedule.setEndAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Berlin") ).plusHours(2) );
 
-        Exception exception =
-                assertThrowsExactly(ZoneRulesException.class, () -> scheduleService.create( schedule ) );
+        Schedule createdEntity = scheduleService.create( schedule );
 
-        assertNull( getService().get( schedule.getId() ) );
-        assertEquals(exception.getMessage(), "Unknown time-zone ID: dwe" );
+        assertNotNull( getService().get( schedule.getId() ) );
+        assertEquals( createdEntity, schedule );
+    }
+
+    @Test
+    void createScheduleForCourseThat() {
+        Schedule schedule = buildNewEntity();
+        LocalDateTime localNow = LocalDateTime.now();
+        schedule.setStartAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Kyiv") ).plusHours(2) );
+        schedule.setEndAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Berlin") ).plusHours(2) );
+
+        Schedule createdEntity = scheduleService.create( schedule );
+
+        assertNotNull( getService().get( schedule.getId() ) );
+        assertEquals( createdEntity, schedule );
     }
 
     @Test
@@ -109,19 +122,6 @@ public class ScheduleServiceTest extends AbstractServiceTest<Schedule> {
 
         assertNull( getService().get( schedule.getId() ) );
         assertEquals(exception.getMessage(), "endAt must be after now" );
-    }
-
-    @Test
-    void updateScheduleTimeZone() {
-        Schedule oldSchedule = entityToDB();
-        Schedule schedule = buildNewEntity();
-        schedule.setId( oldSchedule.getId() );
-        schedule.setTimeZone( "Europe/Berlin" );
-
-        Exception exception =
-                assertThrowsExactly(IllegalArgumentException.class, () -> scheduleService.update( schedule ) );
-
-        assertEquals(exception.getMessage(), "can not modify time zone" );
     }
 
     @Test
@@ -153,4 +153,19 @@ public class ScheduleServiceTest extends AbstractServiceTest<Schedule> {
         assertEquals(exception.getMessage(), "endAt must be after now" );
     }
 
+    @Test
+    void updateScheduleWithinDiffTimeZones() {
+        Schedule oldSchedule = entityToDB();
+        Schedule schedule = buildNewEntity();
+        schedule.setId( oldSchedule.getId() );
+
+        LocalDateTime localNow = LocalDateTime.now();
+        schedule.setStartAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Kyiv") ).plusHours(2) );
+        schedule.setEndAt( ZonedDateTime.of( localNow, ZoneId.of("Europe/Berlin") ).plusHours(2) );
+
+        Schedule createdEntity = scheduleService.update( schedule );
+
+        assertNotNull( getService().get( schedule.getId() ) );
+        assertEquals( createdEntity, schedule );
+    }
 }

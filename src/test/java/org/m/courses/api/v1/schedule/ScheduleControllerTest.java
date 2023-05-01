@@ -8,11 +8,13 @@ import org.m.courses.api.v1.controller.schedule.ScheduleResponse;
 import org.m.courses.builder.CourseBuilder;
 import org.m.courses.builder.GroupBuilder;
 import org.m.courses.builder.ScheduleBuilder;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.filtering.ScheduleSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.Schedule;
+import org.m.courses.model.User;
 import org.m.courses.service.CourseService;
 import org.m.courses.service.GroupService;
 import org.m.courses.service.ScheduleService;
@@ -37,7 +39,10 @@ import java.util.function.Supplier;
 import static org.m.courses.api.v1.controller.common.ApiPath.SCHEDULE_API;
 import static org.m.courses.filtering.FilteringOperation.*;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest( ScheduleController.class )
 public class ScheduleControllerTest extends AbstractControllerTest<Schedule, ScheduleRequest, ScheduleResponse> {
@@ -134,21 +139,28 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     protected Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > getCreateServiceIllegalArgumentExceptionTest() {
         Map< Pair<Runnable, ResultMatcher>, Pair<String, Supplier<Object>> > map = new HashMap<>();
 
-//        map.put(
-//                Pair.of( () -> getCreateOrUpdateThrow(new AccessDeniedException()), status().isForbidden() ),
-//                Pair.of( "cause", () -> null ) );
-//        map.put(
-//                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("entity cannot be null")), status().isBadRequest() ),
-//                Pair.of( "cause", () -> "entity cannot be null" ) );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new AccessDeniedException()), status().isForbidden() ),
+                Pair.of( "cause", () -> null ) );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("entity cannot be null")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "entity cannot be null" ) );
+
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("endAt must be after now")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "endAt must be after now" ) );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("startAt must be before endAt")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "startAt must be before endAt" ) );
         return map;
     }
 
     private void getCreateOrUpdateThrow(Exception exception) {
-//        when(scheduleService.get( anyLong() )).thenReturn( getNewEntity() );
-//        doThrow(exception)
-//                .when(scheduleService).update(any(User.class));
-//        doThrow(exception)
-//                .when(scheduleService).create(any(User.class));
+        when(scheduleService.get( anyLong() )).thenReturn( getNewEntity() );
+        doThrow(exception)
+                .when(scheduleService).update( any(Schedule.class) );
+        doThrow(exception)
+                .when(scheduleService).create( any(Schedule.class) );
     }
 
     @Override

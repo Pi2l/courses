@@ -29,7 +29,7 @@ public class ScheduleService extends AbstractService<Schedule> {
     }
 
     private void validate(Schedule schedule) {
-        ZoneId zoneId = ZoneId.of( schedule.getTimeZone() );
+        ZoneId zoneId = schedule.getEndAt().getZone();
 
         if ( schedule.getEndAt().isBefore( ZonedDateTime.now(zoneId) ) ) {
             throw new IllegalArgumentException("endAt must be after now");
@@ -41,12 +41,6 @@ public class ScheduleService extends AbstractService<Schedule> {
 
     public Schedule update(Schedule entity) {
         validate( entity );
-
-        Schedule oldSchedule = get( entity.getId() );
-        if (!oldSchedule.getTimeZone().equals( entity.getTimeZone() )) {
-            throw new IllegalArgumentException("can not modify time zone");
-        }
-
         return super.update( entity );
     }
 }

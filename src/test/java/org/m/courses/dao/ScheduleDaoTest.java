@@ -96,9 +96,6 @@ public class ScheduleDaoTest extends AbstractDaoTest<Schedule>  {
         schedule.setEndAt(null);
         assertNotNullField(schedule, "endAt");
 
-        schedule = scheduleBuilder.buildNew();
-        schedule.setTimeZone(null);
-        assertNotNullField(schedule, "timeZone");
     }
 
     private void assertNotNullField(Schedule schedule, String fieldName) {
