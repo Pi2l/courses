@@ -10,6 +10,7 @@ import org.m.courses.filtering.GroupSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
 import org.m.courses.model.Group;
 import org.m.courses.service.GroupService;
+import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -38,6 +39,9 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     @MockBean
     private GroupService groupService;
+
+    @MockBean
+    private UserService userService;
 
     @SpyBean
     private GroupSpecificationsBuilder groupSpecificationsBuilder;

@@ -20,7 +20,7 @@ public class UserSpecificationsBuilder extends EntitySpecificationsBuilder<User>
             new FilterableProperty<>("phoneNumber", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)),
             new FilterableProperty<>("login", new EqualSpecificationBuilder<>(), String.class, List.of(EQUAL, NOT_EQUAL)),
             new FilterableProperty<>("role", new EqualSpecificationBuilder<>(), Role.class, List.of(EQUAL, NOT_EQUAL)),
-            new FilterableProperty<>("groupId", new EqualSpecificationBuilder<>(), Long.class, List.of(EQUAL, NOT_EQUAL))
+            new FilterableProperty<>("groupId", new EqualSpecificationBuilder<>(), Long.class, List.of(EQUAL, NOT_EQUAL, IS_NULL, IS_NOT_NULL))
             );
 
     @Override

@@ -31,8 +31,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
-import static org.m.courses.filtering.FilteringOperation.EQUAL;
-import static org.m.courses.filtering.FilteringOperation.NOT_EQUAL;
+import static org.m.courses.filtering.FilteringOperation.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
@@ -368,10 +367,12 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
                             new SearchCriteria("role", EQUAL, Role.USER),
                             new SearchCriteria("role", NOT_EQUAL, Role.ADMIN) ) );
 
-        map.put(List.of("groupId=1", "groupId!=2"),
+        map.put(List.of("groupId=1", "groupId!=2", "groupId=null", "groupId!=null"),
                 List.of(
                         new SearchCriteria("groupId", EQUAL, 1L),
-                        new SearchCriteria("groupId", NOT_EQUAL, 2L) ) );
+                        new SearchCriteria("groupId", NOT_EQUAL, 2L),
+                        new SearchCriteria("groupId", EQUAL, null),
+                        new SearchCriteria("groupId", NOT_EQUAL, null)) );
         return map;
     }
 
