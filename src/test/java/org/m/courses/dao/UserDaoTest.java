@@ -1,7 +1,11 @@
 package org.m.courses.dao;
 
 import org.junit.jupiter.api.Test;
+import org.m.courses.auth.AuthManager;
+import org.m.courses.builder.GroupBuilder;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +22,9 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
 
     @Autowired
     private UserBuilder userBuilder;
+
+    @Autowired
+    private GroupBuilder groupBuilder;
 
     protected AbstractDao<User> getDao() {
         return userDao;
@@ -135,6 +142,42 @@ public class UserDaoTest extends AbstractDaoTest<User>  {
         userWithSameLogin.setLogin( userFromDB.getLogin() );
 
         assertThrowsExactly( DataIntegrityViolationException.class, () -> userDao.update(userWithSameLogin) );
+    }
+
+    @Test
+    void updateUserSetGroupAsAdminTest() {
+        User oldUser = userBuilder.setGroup( groupBuilder.toDB() ).toDB();
+        User oldUserWithoutGroup = userBuilder.setGroup( null ).toDB();
+
+        User user = userBuilder.setGroup( groupBuilder.toDB() ).build();
+        user.setId( oldUser.getId() );
+
+        User userWithoutGroup = userBuilder.setGroup( null ).build();
+        userWithoutGroup.setId( oldUserWithoutGroup.getId() );
+
+        User updatedUser = userDao.update(user);
+        assertNotNull(updatedUser);
+        assertEntitiesEqual( user, updatedUser );
+
+        User updatedUserWithNullGroup = userDao.update(userWithoutGroup);
+        assertNotNull(updatedUserWithNullGroup);
+        assertEntitiesEqual( userWithoutGroup, updatedUserWithNullGroup );
+    }
+
+    @Test
+    void updateUserSetGroupAsUserTest() {
+        User oldUser = userBuilder.setGroup( groupBuilder.toDB() ).toDB();
+        User oldUserWithoutGroup = userBuilder.setGroup( null ).toDB();
+
+        User user = userBuilder.setGroup( groupBuilder.toDB() ).setRole(Role.USER).build();
+        user.setId( oldUser.getId() );
+        AuthManager.loginAs( user );
+
+        User userWithoutGroup = userBuilder.setGroup( null ).build();
+        userWithoutGroup.setId( oldUserWithoutGroup.getId() );
+
+        assertThrowsExactly( AccessDeniedException.class, () -> userDao.update(user) );
+        assertThrowsExactly( AccessDeniedException.class, () -> userDao.update(userWithoutGroup) );
     }
 
 }

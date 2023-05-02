@@ -1,6 +1,7 @@
 package org.m.courses.dao;
 
 import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.repository.PrimaryRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
@@ -45,9 +47,14 @@ public class UserDao extends AbstractDao<User> {
                 .orElse(null);
     }
 
+    private boolean canSetGroup(Group entity, Group fromDb) {
+        return isAdmin() || (Objects.equals(entity, fromDb));
+    }
+
     @Override
     public User update(User user) {
-        if ( !canModify( user.getId() ) ) {
+        User fromDb = get( user.getId() );
+        if ( !(canModify( user.getId() ) && canSetGroup(user.getGroup(), fromDb.getGroup())) ) {
             throw new AccessDeniedException();
         }
 

@@ -2,7 +2,9 @@ package org.m.courses.dao;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.m.courses.auth.AuthManager;
 import org.m.courses.model.Identity;
+import org.m.courses.model.Role;
 
 import java.util.List;
 
@@ -22,6 +24,7 @@ public abstract class AbstractDaoTest<Entity extends Identity<Long>> extends Aut
 
     @AfterEach
     void cleanDB() {
+        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
         getDao().getAll().forEach( course -> getDao().delete(course.getId() ) );
     }
 

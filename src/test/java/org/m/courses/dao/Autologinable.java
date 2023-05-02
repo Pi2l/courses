@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class Autologinable {
 
     @Autowired
-    private UserBuilder userBuilder;
+    protected UserBuilder userBuilder;
 
     @BeforeEach
     void login() {

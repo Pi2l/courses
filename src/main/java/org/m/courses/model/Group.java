@@ -17,8 +17,11 @@ public class Group implements Identity<Long> {
     @Column(length = 20, unique = true)
     private String name;
 
-//    @OneToMany
-//    private Set<User> users = new HashSet<>();
+    @OneToMany
+    private Set<User> users = new HashSet<>();
+
+    @ManyToMany
+    private Set<Course> courses = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -34,6 +37,22 @@ public class Group implements Identity<Long> {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Set<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<User> users) {
+        this.users = users;
+    }
+
+    public Set<Course> getCourses() {
+        return courses;
+    }
+
+    public void setCourses(Set<Course> courses) {
+        this.courses = courses;
     }
 
     @Override
