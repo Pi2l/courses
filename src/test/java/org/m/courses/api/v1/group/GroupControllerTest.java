@@ -1,14 +1,18 @@
 package org.m.courses.api.v1.group;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.group.GroupController;
 import org.m.courses.api.v1.controller.group.GroupRequest;
 import org.m.courses.api.v1.controller.group.GroupResponse;
+import org.m.courses.builder.CourseBuilder;
 import org.m.courses.builder.GroupBuilder;
 import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.filtering.GroupSpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
+import org.m.courses.model.Course;
 import org.m.courses.model.Group;
+import org.m.courses.service.CourseService;
 import org.m.courses.service.GroupService;
 import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,13 +22,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.GROUP_API;
 import static org.m.courses.filtering.FilteringOperation.*;
@@ -43,8 +45,17 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private CourseService courseService;
+
     @SpyBean
     private GroupSpecificationsBuilder groupSpecificationsBuilder;
+
+    @BeforeEach
+    void init() {
+        when(courseService.get( anyLong() ))
+                .thenAnswer(answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
+    }
 
     @Override
     protected String getControllerPath() {
@@ -58,7 +69,10 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     @Override
     protected Group getNewEntity() {
-        return GroupBuilder.builder().build();
+        return GroupBuilder
+                .builder()
+                .setCourses(Set.of(CourseBuilder.builder().build(), CourseBuilder.builder().build()))
+                .build();
     }
 
     @Override
@@ -70,6 +84,8 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     protected GroupRequest convertToRequest(Group entity) {
         GroupRequest request = new GroupRequest();
         request.setName( entity.getName() );
+
+        request.setCourseIds( entity.getCourses().stream().map(Course::getId).collect(Collectors.toSet()) );
         return request;
     }
 

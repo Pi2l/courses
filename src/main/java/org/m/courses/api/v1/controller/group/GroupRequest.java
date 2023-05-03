@@ -4,11 +4,13 @@ import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Group;
 
 import javax.validation.constraints.NotBlank;
+import java.util.Set;
 
 public class GroupRequest extends AbstractRequest<Group> {
 
     @NotBlank
     private String name;
+    private Set<Long> courseIds;
 
     public GroupRequest() {
     }
@@ -37,4 +39,11 @@ public class GroupRequest extends AbstractRequest<Group> {
         return entity;
     }
 
+    public Set<Long> getCourseIds() {
+        return courseIds;
+    }
+
+    public void setCourseIds(Set<Long> courseIds) {
+        this.courseIds = courseIds;
+    }
 }

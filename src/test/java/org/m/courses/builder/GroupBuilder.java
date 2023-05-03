@@ -1,11 +1,13 @@
 package org.m.courses.builder;
 
 import org.m.courses.dao.GroupDao;
+import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
+import java.util.Set;
 
 
 @Component
@@ -54,6 +56,11 @@ public class GroupBuilder {
 
     public GroupBuilder setName(String name) {
         group.setName(name);
+        return this;
+    }
+
+    public GroupBuilder setCourses(Set<Course> courses) {
+        group.setCourses(courses);
         return this;
     }
 }
