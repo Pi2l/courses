@@ -45,17 +45,8 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     @MockBean
     private UserService userService;
 
-    @MockBean
-    private CourseService courseService;
-
     @SpyBean
     private GroupSpecificationsBuilder groupSpecificationsBuilder;
-
-    @BeforeEach
-    void init() {
-        when(courseService.get( anyLong() ))
-                .thenAnswer(answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
-    }
 
     @Override
     protected String getControllerPath() {
@@ -69,10 +60,7 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     @Override
     protected Group getNewEntity() {
-        return GroupBuilder
-                .builder()
-                .setCourses(Set.of(CourseBuilder.builder().build(), CourseBuilder.builder().build()))
-                .build();
+        return GroupBuilder.builder().build();
     }
 
     @Override
@@ -84,8 +72,6 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     protected GroupRequest convertToRequest(Group entity) {
         GroupRequest request = new GroupRequest();
         request.setName( entity.getName() );
-
-        request.setCourseIds( entity.getCourses().stream().map(Course::getId).collect(Collectors.toSet()) );
         return request;
     }
 

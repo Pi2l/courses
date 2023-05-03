@@ -2,11 +2,9 @@ package org.m.courses.api.v1.controller.group;
 
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
-import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
 import org.m.courses.filtering.GroupSpecificationsBuilder;
-import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.User;
 import org.m.courses.service.AbstractService;
@@ -22,10 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.GROUP_API;
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
@@ -37,15 +33,13 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
 
     private final GroupService groupService;
     private final UserService userService;
-    private final CourseService courseService;
     private final Validator validator;
     private final ConversionService conversionService;
     private final GroupSpecificationsBuilder groupSpecificationsBuilder;
 
-    public GroupController(GroupService groupService, UserService userService, CourseService courseService, ConversionService conversionService, Validator validator, GroupSpecificationsBuilder groupSpecificationsBuilder) {
+    public GroupController(GroupService groupService, UserService userService, ConversionService conversionService, Validator validator, GroupSpecificationsBuilder groupSpecificationsBuilder) {
         this.groupService = groupService;
         this.userService = userService;
-        this.courseService = courseService;
         this.validator = validator;
         this.conversionService = conversionService;
         this.groupSpecificationsBuilder = groupSpecificationsBuilder;
@@ -87,31 +81,6 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
             entity.setUsers( users.toSet() );
         }
         return new GroupResponse( entity );
-    }
-
-    @Override
-    protected Group createEntity(Group entity, GroupRequest request) {
-        getCourses(entity, request);
-        return getService().create( entity );
-    }
-
-    @Override
-    protected Group updateEntity(Group entity, GroupRequest request) {
-        getCourses(entity, request);
-        return getService().update( entity );
-    }
-
-    private void getCourses(Group entity, GroupRequest request) {
-        Set<Long> courseIds = request.getCourseIds();
-        Set<Course> courses = courseIds.stream()
-                .map(courseId -> {
-                    Course course = courseService.get(courseId);
-                    if (course == null) throw new ItemNotFoundException("course not found with id = " + courseId );
-                    return course;
-                })
-                .collect(Collectors.toSet());
-
-        entity.setCourses( courses );
     }
 
     @Override

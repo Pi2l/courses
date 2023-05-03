@@ -44,9 +44,6 @@ public class GroupDaoTest extends AbstractDaoTest<Group>  {
 
         assertTrue( updatedEntity.getUsers().containsAll( entityFromDB.getUsers()) );
         assertTrue( entityFromDB.getUsers().containsAll( updatedEntity.getUsers()) );
-
-        assertTrue( updatedEntity.getCourses().containsAll( entityFromDB.getCourses()) );
-        assertTrue( entityFromDB.getCourses().containsAll( updatedEntity.getCourses()) );
     }
 }
 
