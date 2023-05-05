@@ -155,6 +155,12 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
                 Map.of("name", "name1"),
                 Pair.of( Group::getName, () -> "name1" ) );
 
+        Course course1 = CourseBuilder.builder().setId(1L).build();
+        Course course2 = CourseBuilder.builder().setId(2L).build();
+        map.put(
+                Map.of("courseIds", "" + course1.getId() + "," + course2.getId() ),
+                Pair.of( Group::getCourses, () -> Set.of( course1, course2 ) ) );
+
         return map;
     }
 

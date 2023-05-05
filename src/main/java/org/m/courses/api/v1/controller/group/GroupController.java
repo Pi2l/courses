@@ -14,6 +14,7 @@ import org.m.courses.service.CourseService;
 import org.m.courses.service.GroupService;
 import org.m.courses.service.UserService;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +68,15 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
                 validateField("name", name);
                 group.setName( name );
                 return;
+            case "courseIds":
+                TypeDescriptor sourceType = TypeDescriptor.valueOf(String.class);
+                TypeDescriptor targetType = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(Long.class));
+
+                List<Long> courseIds = (List<Long>) conversionService.convert(field.getValue(), sourceType, targetType);
+                validateField("courseIds", courseIds);
+
+                getCourses(group, new HashSet<>(courseIds));
+                return;
             default:
                 throw new IllegalArgumentException();
         }
@@ -103,6 +114,10 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
 
     private void getCourses(Group entity, GroupRequest request) {
         Set<Long> courseIds = request.getCourseIds();
+        getCourses(entity, courseIds);
+    }
+
+    private void getCourses(Group entity, Set<Long> courseIds) {
         Set<Course> courses = courseIds.stream()
                 .map(courseId -> {
                     Course course = courseService.get(courseId);
