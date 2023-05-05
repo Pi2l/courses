@@ -175,6 +175,11 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
         setupBlankField(map, "name");
+
+        Course course1 = CourseBuilder.builder().setId(-1L).build();
+        map.put(
+                Map.of("courseIds", "" + course1.getId() ),
+                Pair.of( "['courseIds[].<iterable element>']", "must be greater than or equal to 0") );
     }
 
     private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
