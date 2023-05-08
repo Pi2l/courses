@@ -2,7 +2,6 @@ package org.m.courses.api.v1.schedule;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.m.courses.api.v1.common.AbstractControllerTest;
-import org.m.courses.api.v1.controller.course.CourseRequest;
 import org.m.courses.api.v1.controller.schedule.ScheduleController;
 import org.m.courses.api.v1.controller.schedule.ScheduleRequest;
 import org.m.courses.api.v1.controller.schedule.ScheduleResponse;
@@ -21,6 +20,8 @@ import org.m.courses.service.ScheduleService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -28,10 +29,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,8 +38,7 @@ import static org.m.courses.api.v1.controller.common.ApiPath.SCHEDULE_API;
 import static org.m.courses.filtering.FilteringOperation.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest( ScheduleController.class )
@@ -73,6 +70,16 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     private void mockGetCourse() {
         when( courseService.get( anyLong() ) )
                 .thenAnswer( answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
+
+        mockGetAllCourses( Set.of() );
+    }
+
+    private void mockGetAllCourses(Set<Course> courses) {
+
+        Page<Course> page = mock(Page.class);
+        when( page.toSet()).thenReturn( courses );
+
+        when( courseService.getAll( any(Pageable.class), any() ) ).thenReturn(page);
     }
 
     @Override
@@ -177,6 +184,9 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
         map.put(
                 Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("startAt must be before endAt")), status().isBadRequest() ),
                 Pair.of( "cause", () -> "startAt must be before endAt" ) );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("group has not such course with courseId = 1")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "group has not such course with courseId = 1") );
         return map;
     }
 

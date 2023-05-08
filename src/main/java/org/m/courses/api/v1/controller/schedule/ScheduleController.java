@@ -9,21 +9,24 @@ import org.m.courses.filtering.ScheduleSpecificationsBuilder;
 import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.Schedule;
-import org.m.courses.service.*;
+import org.m.courses.service.AbstractService;
+import org.m.courses.service.CourseService;
+import org.m.courses.service.GroupService;
+import org.m.courses.service.ScheduleService;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.SCHEDULE_API;
+import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
 
 
 @RestController
@@ -95,6 +98,7 @@ public class ScheduleController extends AbstractController<Schedule, ScheduleReq
         if (group == null) {
             throw new ItemNotFoundException("group not found with id = " + groupId );
         }
+        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group_id", groupId) ).toSet() );
         return group;
     }
 
