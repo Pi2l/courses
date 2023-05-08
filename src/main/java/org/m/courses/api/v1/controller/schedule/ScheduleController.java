@@ -98,7 +98,7 @@ public class ScheduleController extends AbstractController<Schedule, ScheduleReq
         if (group == null) {
             throw new ItemNotFoundException("group not found with id = " + groupId );
         }
-        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group_id", groupId) ).toSet() );
+        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group", groupId) ).toSet() );
         return group;
     }
 

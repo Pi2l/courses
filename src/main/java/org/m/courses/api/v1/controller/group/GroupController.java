@@ -93,7 +93,7 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
 
     @Override
     protected GroupResponse convertToResponse(Group entity) {
-        Page<User> users = userService.getAll(Pageable.unpaged(), buildEqualSpec("group_id", entity.getId()));
+        Page<User> users = userService.getAll(Pageable.unpaged(), buildEqualSpec("group", entity.getId()));
         if (users != null) {
             entity.setUsers( users.toSet() );
         }
