@@ -308,7 +308,7 @@ public abstract class AbstractControllerTest<
 
     @Test
     void updateEntityWithOptionalFieldsTest() {
-        mockServiceCreateOrUpdateMethod( resultCaptor, whenCreateInService( any( getEntityClass() ) ) );
+        mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
 
         getUpdateWithOptionalValuesTestParameters().forEach( this::doUpdateWithOptionalValuesTestParameters );
     }

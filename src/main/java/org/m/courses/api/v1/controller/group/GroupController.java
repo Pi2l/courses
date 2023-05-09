@@ -61,6 +61,7 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
         return group;
     }
 
+    @SuppressWarnings("unchecked")
     private void patchField(Group group, Map.Entry< String, Object > field) {
         switch (field.getKey()) {
             case "name":
@@ -72,10 +73,12 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
                 TypeDescriptor sourceType = TypeDescriptor.valueOf(String.class);
                 TypeDescriptor targetType = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(Long.class));
 
-                List<Long> courseIds = (List<Long>) conversionService.convert(field.getValue(), sourceType, targetType);
+                Object courseIds = conversionService.convert(field.getValue(), sourceType, targetType);
                 validateField("courseIds", courseIds);
 
-                getCourses(group, new HashSet<>(courseIds));
+                Set<Long> courseIdsSet = courseIds != null ? new HashSet<>((List<Long>) courseIds) : new HashSet<>();
+
+                getCourses(group, courseIdsSet);
                 return;
             default:
                 throw new IllegalArgumentException();
@@ -114,7 +117,7 @@ public class GroupController extends AbstractController<Group, GroupRequest, Gro
 
     private void getCourses(Group entity, GroupRequest request) {
         Set<Long> courseIds = request.getCourseIds();
-        getCourses(entity, courseIds);
+        getCourses(entity, courseIds == null ? new HashSet<>() : courseIds);
     }
 
     private void getCourses(Group entity, Set<Long> courseIds) {
