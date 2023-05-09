@@ -81,9 +81,9 @@ public class CourseController extends AbstractController<Course, CourseRequest, 
         switch ( field.getKey() ) {
             case "teacherId":
                 Long teacherId = conversionService.convert(field.getValue(), Long.class);
-                User teacher = getTeacher(teacherId);
+                validateField("teacherId", teacherId);
 
-                validateField("teacherId", teacher);
+                User teacher = getTeacher(teacherId);
                 course.setTeacher( teacher );
                 return;
             case "name":

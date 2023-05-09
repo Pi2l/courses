@@ -92,32 +92,33 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     }
 
     @Override
-    protected Map<Consumer<CourseRequest>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
-        Map<Consumer<CourseRequest>, Pair<String, String>> wrongValues = new HashMap<>();
+    protected Map< Pair<Consumer<CourseRequest>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters() {
+        Map< Pair<Consumer<CourseRequest>, Runnable>, Pair<String, String>> wrongValues = new HashMap<>();
 
-        wrongValues.put(request -> {
-            when( userService.get( anyLong() ) ).thenReturn(null);
-            request.setTeacherId(834L);
-        }, Pair.of("cause", "teacher not found with id = 834") );
+        wrongValues.put(
+                Pair.of(request -> {
+                            when(userService.get(anyLong())).thenReturn(null);
+                            request.setTeacherId(834L);
+                        }, this::mockGetTeacher ),
+                Pair.of("cause", "teacher not found with id = 834") );
 
-        wrongValues.put(request -> {
-            mockGetTeacher();
-            request.setLessonCount(0);
-        }, Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
+        wrongValues.put(
+                Pair.of(request -> request.setLessonCount(0), () -> {}),
+                Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
 
         setupWrongValues( wrongValues );
 
         return wrongValues;
     }
 
-    private void setupWrongValues(Map<Consumer<CourseRequest>, Pair<String, String>> wrongValues) {
-        wrongValues.put(courseRequest -> courseRequest.setName(null), Pair.of("name", "must not be blank") );
-        wrongValues.put(courseRequest -> courseRequest.setName(""), Pair.of("name", "must not be blank") );
-        wrongValues.put(courseRequest -> courseRequest.setName("   "), Pair.of("name", "must not be blank") );
+    private void setupWrongValues(Map< Pair<Consumer<CourseRequest>, Runnable>, Pair<String, String>> wrongValues) {
+        wrongValues.put(Pair.of( req -> req.setName(null), () -> {}), Pair.of("name", "must not be blank") );
+        wrongValues.put(Pair.of( req -> req.setName(""), () -> {}), Pair.of("name", "must not be blank") );
+        wrongValues.put(Pair.of( req -> req.setName("   "), () -> {}), Pair.of("name", "must not be blank") );
     }
 
     @Override
-    protected Map<Consumer<CourseRequest>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
+    protected Map< Pair<Consumer<CourseRequest>, Runnable>, Pair<String, String>> getUpdateWithWrongValuesTestParameters() {
 
         return getCreateWithWrongValuesTestParameters();
     }

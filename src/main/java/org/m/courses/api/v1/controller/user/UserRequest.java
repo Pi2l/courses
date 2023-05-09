@@ -1,6 +1,7 @@
 package org.m.courses.api.v1.controller.user;
 
 import org.m.courses.api.v1.controller.common.AbstractRequest;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 
@@ -29,6 +30,8 @@ public class UserRequest extends AbstractRequest<User> {
     @NotNull
     private Role role;
 
+    private Long groupId;
+
     public UserRequest() {
     }
 
@@ -39,6 +42,9 @@ public class UserRequest extends AbstractRequest<User> {
         this.setLogin( user.getLogin() );
         this.setPassword( user.getPassword() );
         this.setRole( user.getRole() );
+
+        Group group = user.getGroup();
+        this.setGroupId( group == null ? null : group.getId() );
     }
 
     @Override
@@ -104,5 +110,13 @@ public class UserRequest extends AbstractRequest<User> {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 }

@@ -7,7 +7,8 @@ public class ApiPath {
     public static final String V1 = "/v1";
 
     public static final String USER_API = API + V1 + "/users/";
-
     public static final String COURSE_API = API + V1 + "/courses/";
+    public static final String GROUP_API = API + V1 + "/groups/";
+    public static final String SCHEDULE_API = API + V1 + "/schedules/";
 
 }

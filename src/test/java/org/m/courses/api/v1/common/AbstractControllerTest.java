@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.api.v1.controller.common.AbstractResponse;
 import org.m.courses.api.v1.controller.common.PageResponse;
+import org.m.courses.api.v1.controller.user.UserRequest;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
 import org.m.courses.filtering.SearchCriteria;
@@ -22,6 +23,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -29,17 +33,17 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -51,6 +55,7 @@ public abstract class AbstractControllerTest<
         Response extends AbstractResponse
         > {
 
+    private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
     protected MockMvc mockMvc;
 
     @Autowired
@@ -64,6 +69,9 @@ public abstract class AbstractControllerTest<
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
+    @Autowired
+    private ObjectMapper mapper;
+
     protected abstract AbstractService<Entity> getService();
 
     protected abstract String getControllerPath();
@@ -71,6 +79,10 @@ public abstract class AbstractControllerTest<
     protected abstract Class<Entity> getEntityClass();
 
     protected abstract Entity getNewEntity();
+
+    private String getJson(Object object) throws JsonProcessingException {
+        return mapper.writeValueAsString( object );
+    }
 
     @Test
     public void getExistingEntityByIdTest() throws Exception {
@@ -119,9 +131,9 @@ public abstract class AbstractControllerTest<
         getCreateWithWrongValuesTestParameters().forEach( this::doCreateWithWrongValuesTestParameters );
     }
 
-    private void doCreateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
+    private void doCreateWithWrongValuesTestParameters(Pair< Consumer<Request>, Runnable > invalidValue, Pair<String, String> errorMsg) {
         Request request = convertToRequest(getNewEntity());
-        invalidValue.accept(request);
+        invalidValue.getFirst().accept(request);
         try {
             mockMvc.perform(post(getControllerPath())
                             .content(getJson(request))
@@ -133,6 +145,7 @@ public abstract class AbstractControllerTest<
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        invalidValue.getSecond().run();
     }
 
     @Test
@@ -187,11 +200,11 @@ public abstract class AbstractControllerTest<
         getUpdateWithWrongValuesTestParameters().forEach( this::doUpdateWithWrongValuesTestParameters );
     }
 
-    private void doUpdateWithWrongValuesTestParameters(Consumer<Request> invalidValue, Pair<String, String> errorMsg) {
+    private void doUpdateWithWrongValuesTestParameters(Pair< Consumer<Request>, Runnable> invalidValue, Pair<String, String> errorMsg) {
         Entity entity = getNewEntity();
         whenGetEntity(any(Long.class), entity);
         Request request = convertToRequest( entity );
-        invalidValue.accept(request);
+        invalidValue.getFirst().accept(request);
 
         try {
             mockMvc.perform( put( getControllerPath() + "/{id}", entity.getId() )
@@ -204,6 +217,7 @@ public abstract class AbstractControllerTest<
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        invalidValue.getSecond().run();
     }
 
     @Test
@@ -393,12 +407,6 @@ public abstract class AbstractControllerTest<
             entity.setId( getRandomId() );
             resultCaptor.setResult(entity);
             return entity;});
-    }
-
-    protected String getJson(Object expectedEntity) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        return mapper.writeValueAsString( expectedEntity );
     }
 
     @Test
@@ -613,9 +621,9 @@ public abstract class AbstractControllerTest<
 
     protected abstract List<Function<Entity, Object>> getValueToBeUpdated();
 
-    protected abstract Map<Consumer<Request>, Pair<String, String>> getCreateWithWrongValuesTestParameters();
+    protected abstract Map< Pair<Consumer<Request>, Runnable>, Pair<String, String>> getCreateWithWrongValuesTestParameters();
 
-    protected abstract Map< Consumer< Request >, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
+    protected abstract Map< Pair<Consumer<Request>, Runnable>, Pair< String, String > > getUpdateWithWrongValuesTestParameters();
 
     protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Supplier<Object>> > getPatchValuesTestParameters();
 
