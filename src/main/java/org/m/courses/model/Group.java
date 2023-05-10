@@ -20,6 +20,9 @@ public class Group implements Identity<Long> {
     @OneToMany
     private Set<User> users = new HashSet<>();
 
+    @ManyToMany
+    private Set<Course> courses = new HashSet<>();
+
     public Long getId() {
         return id;
     }
@@ -42,6 +45,14 @@ public class Group implements Identity<Long> {
 
     public void setUsers(Set<User> users) {
         this.users = users;
+    }
+
+    public Set<Course> getCourses() {
+        return courses;
+    }
+
+    public void setCourses(Set<Course> courses) {
+        this.courses = courses;
     }
 
     @Override
