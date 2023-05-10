@@ -1,7 +1,6 @@
 package org.m.courses.dao;
 
 import org.m.courses.builder.GroupBuilder;
-import org.m.courses.builder.UserBuilder;
 import org.m.courses.model.Group;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -37,6 +37,9 @@ public class ScheduleService extends AbstractService<Schedule> {
         if ( schedule.getStartAt().isAfter( schedule.getEndAt() ) ) {
             throw new IllegalArgumentException("startAt must be before endAt");
         }
+        if ( !schedule.getGroup().getCourses().contains( schedule.getCourse() ) ) {
+            throw new IllegalArgumentException("group has not such course with courseId = " + schedule.getCourse().getId() );
+        }
     }
 
     public Schedule update(Schedule entity) {

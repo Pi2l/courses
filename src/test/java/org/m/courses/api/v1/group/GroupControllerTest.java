@@ -96,6 +96,11 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
         wrongValues.put( Pair.of( req -> req.setName("   "), () -> {}), Pair.of("name", "must not be blank") );
         wrongValues.put( Pair.of( req -> req.setName(null), () -> {}), Pair.of("name", "must not be blank") );
         wrongValues.put( Pair.of( req -> req.setName(""), () -> {}), Pair.of("name", "must not be blank") );
+
+        wrongValues.put( Pair.of( req -> {
+            when( courseService.get(anyLong()) ).thenReturn(null);
+            req.setCourseIds( Set.of( 1L ) );
+        }, () -> when( courseService.get(anyLong()) ).thenReturn( CourseBuilder.builder().build() ) ), Pair.of("cause", "course not found with id = 1") );
     }
 
     @Override
@@ -141,6 +146,16 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
                 Map.of("name", "name1"),
                 Pair.of( Group::getName, () -> "name1" ) );
 
+        Course course1 = CourseBuilder.builder().setId(1L).build();
+        Course course2 = CourseBuilder.builder().setId(2L).build();
+        map.put(
+                Map.of("courseIds", "" + course1.getId() + "," + course2.getId() ),
+                Pair.of( Group::getCourses, () -> Set.of( course1, course2 ) ) );
+
+        Map<String, Object> ids = new HashMap<>();
+        ids.put("courseIds", null );
+        map.put(ids,
+                Pair.of( Group::getCourses, HashSet::new) );
         return map;
     }
 
@@ -155,6 +170,16 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
         setupBlankField(map, "name");
+
+        Course course1 = CourseBuilder.builder().setId(-1L).build();
+        map.put(
+                Map.of("courseIds", "" + course1.getId() ),
+                Pair.of( "['courseIds[].<iterable element>']", "must be greater than or equal to 0") );
+
+        when( courseService.get(anyLong()) ).thenReturn(null);
+        map.put(
+                Map.of("courseIds", "" +  CourseBuilder.builder().setId(1L).build().getId() ),
+                Pair.of("cause", "course not found with id = 1") );
     }
 
     private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
@@ -173,7 +198,12 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     @Override
     protected Map< Consumer< GroupRequest >, Pair< Function<Group, Object>, Object> > getCreateWithOptionalValuesTestParameters() {
-        return new HashMap<>();
+        Map< Consumer< GroupRequest >, Pair< Function<Group, Object>, Object> > map = new HashMap<>();
+
+        map.put(
+                req -> req.setCourseIds( null ),
+                Pair.of(Group::getCourses, new HashSet<>()) );
+        return map;
     }
 
     @Override
