@@ -42,7 +42,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest( ScheduleController.class )
-public class MarkControllerTest extends AbstractControllerTest<Schedule, ScheduleRequest, ScheduleResponse> {
+public class ScheduleControllerTest extends AbstractControllerTest<Schedule, ScheduleRequest, ScheduleResponse> {
 
     @MockBean
     private ScheduleService scheduleService;
