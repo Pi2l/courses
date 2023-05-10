@@ -27,20 +27,20 @@ public class GroupServiceTest extends AbstractServiceTest<Group> {
 
     @Override
     protected Group entityToDB() {
-        return getEntity().toDB();
+        return getGroupBuilder().toDB();
     }
 
     @Override
     protected Group buildEntity() {
-        return getEntity().build();
+        return getGroupBuilder().build();
     }
 
     @Override
     protected Group buildNewEntity() {
-        return getEntity().buildNew();
+        return getGroupBuilder().buildNew();
     }
 
-    private GroupBuilder getEntity() {
+    private GroupBuilder getGroupBuilder() {
         Course course1 = courseBuilder.toDB();
         Course course2 = courseBuilder.toDB();
 

@@ -4,7 +4,6 @@ import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Group;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.Set;
 

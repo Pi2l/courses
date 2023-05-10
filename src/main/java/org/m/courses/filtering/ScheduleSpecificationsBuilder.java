@@ -1,6 +1,5 @@
 package org.m.courses.filtering;
 
-import org.m.courses.filtering.specification.ContainSpecificationBuilder;
 import org.m.courses.filtering.specification.EqualSpecificationBuilder;
 import org.m.courses.filtering.specification.ZonedDateTimeSpecificationBuilder;
 import org.m.courses.model.Schedule;
