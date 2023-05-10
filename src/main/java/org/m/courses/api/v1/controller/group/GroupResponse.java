@@ -1,9 +1,7 @@
 package org.m.courses.api.v1.controller.group;
 
 import org.m.courses.api.v1.controller.common.AbstractResponse;
-import org.m.courses.api.v1.controller.course.CourseResponse;
 import org.m.courses.api.v1.controller.user.UserResponse;
-import org.m.courses.model.Course;
 import org.m.courses.model.Group;
 import org.m.courses.model.User;
 
@@ -14,7 +12,6 @@ public class GroupResponse extends AbstractResponse {
 
     private String name;
     private Set<UserResponse> users;
-    private Set<CourseResponse> courses;
 
     public GroupResponse(Group entity) {
         super( entity.getId() );
@@ -24,12 +21,6 @@ public class GroupResponse extends AbstractResponse {
         if (userSet != null) {
             this.users = userSet.stream()
                     .map(UserResponse::new).collect(Collectors.toSet());
-        }
-
-        Set<Course> courseSet = entity.getCourses();
-        if (courseSet != null) {
-            this.courses = courseSet.stream()
-                    .map(CourseResponse::new).collect(Collectors.toSet());
         }
     }
 }
