@@ -39,4 +39,12 @@ public class GroupRequest extends AbstractRequest<Group> {
         entity.setName( getName() );
         return entity;
     }
+
+    public Set<Long> getCourseIds() {
+        return courseIds;
+    }
+
+    public void setCourseIds(Set<Long> courseIds) {
+        this.courseIds = courseIds;
+    }
 }
