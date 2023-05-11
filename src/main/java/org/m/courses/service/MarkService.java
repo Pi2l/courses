@@ -3,12 +3,12 @@ package org.m.courses.service;
 import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.MarkDao;
 import org.m.courses.dao.ScheduleDao;
-import org.m.courses.model.Mark;
-import org.m.courses.model.Schedule;
+import org.m.courses.model.*;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 @Service
 public class MarkService extends AbstractService<Mark> {
@@ -31,17 +31,22 @@ public class MarkService extends AbstractService<Mark> {
     }
 
     private void validate(Mark mark) {
-//        ZoneId zoneId = mark.getEndAt().getZone();
-//
-//        if ( mark.getEndAt().isBefore( ZonedDateTime.now(zoneId) ) ) {
-//            throw new IllegalArgumentException("endAt must be after now");
-//        }
-//        if ( mark.getStartAt().isAfter( mark.getEndAt() ) ) {
-//            throw new IllegalArgumentException("startAt must be before endAt");
-//        }
-//        if ( !mark.getGroup().getCourses().contains( mark.getCourse() ) ) {
-//            throw new IllegalArgumentException("group has not such course with courseId = " + mark.getCourse().getId() );
-//        }
+        User user = mark.getUser();
+        if ( !user.getRole().equals( Role.USER ) ) {
+            throw new IllegalArgumentException("user must have USER role");
+        }
+
+        Group group = user.getGroup();
+        if ( group == null ) {
+            throw new IllegalArgumentException("user has to be in group");
+        }
+        Set<Course> courses = group.getCourses();
+        if ( courses == null ) {
+            throw new IllegalArgumentException("group has contain any course");
+        }
+        if ( !courses.contains(mark.getCourse()) ) {
+            throw new IllegalArgumentException("user does not belong to that course");
+        }
     }
 
     public Mark update(Mark entity) {
