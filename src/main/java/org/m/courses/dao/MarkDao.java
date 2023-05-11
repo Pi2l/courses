@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.criteria.Join;
 import java.util.List;
 
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
@@ -44,6 +45,7 @@ public class MarkDao extends AbstractDao<Mark> {
                 .orElse(null);
     }
 
+    @Override
     public Mark create(Mark entity) {
         Course course = entity.getCourse();
 
@@ -61,7 +63,8 @@ public class MarkDao extends AbstractDao<Mark> {
 
     @Override
     protected boolean canModify(Long id) {
-        Course course = get( id ).getCourse();
+        Mark mark = get(id);
+        Course course = mark == null ? null : mark.getCourse();
         return canModify( course );
     }
 
@@ -72,6 +75,19 @@ public class MarkDao extends AbstractDao<Mark> {
     }
 
     private Specification<Mark> buildReadOnlySpec() {
+        if (authorizationService.isUser()) {
+            return where( buildEqualSpec("user", authorizationService.getCurrentUser().getId()) );
+        } else if (authorizationService.isTeacher()) {
+            return where( getTeacherCourses() );
+        }
         return where( null );
+    }
+
+    private Specification<Mark> getTeacherCourses() {
+        return (root, cq, cb) -> {
+            Join<Mark, Course> courseJoin = root.join("course");
+            Join<Course, User> userJoin = courseJoin.join("teacher");
+            return cb.equal( userJoin.get("id"), authorizationService.getCurrentUser().getId() );
+        };
     }
 }
