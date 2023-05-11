@@ -6,6 +6,7 @@ import org.m.courses.api.v1.controller.mark.MarkController;
 import org.m.courses.api.v1.controller.mark.MarkRequest;
 import org.m.courses.api.v1.controller.mark.MarkResponse;
 import org.m.courses.builder.CourseBuilder;
+import org.m.courses.builder.GroupBuilder;
 import org.m.courses.builder.MarkBuilder;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.exception.AccessDeniedException;
@@ -62,7 +63,17 @@ public class MarkControllerTest extends AbstractControllerTest<Mark, MarkRequest
 
     private void mockGetUser() {
         when( userService.get( anyLong() ) )
-                .thenAnswer( answer -> UserBuilder.builder().setId( answer.getArgument(0) ).build() );
+                .thenAnswer( answer -> UserBuilder.builder()
+                                .setId( answer.getArgument(0) )
+                                .setGroup( GroupBuilder.builder().build() ).build() );
+        mockGetAllCourses( Set.of( CourseBuilder.builder().build() ) );
+    }
+
+    private void mockGetAllCourses(Set<Course> courses) {
+        Page<Course> page = mock(Page.class);
+        when( page.toSet()).thenReturn( courses );
+
+        when( courseService.getAll( any(Pageable.class), any() ) ).thenReturn(page);
     }
 
     private void mockGetCourse() {
@@ -141,6 +152,14 @@ public class MarkControllerTest extends AbstractControllerTest<Mark, MarkRequest
                         }, this::mockGetUser ),
                 Pair.of( "cause", "user not found with id = " + user.getId() ) );
 
+        User userWithoutGroup = UserBuilder.builder().build();
+        wrongValues.put(
+                Pair.of( request -> {
+                            when( userService.get( anyLong() ) ).thenReturn( userWithoutGroup );
+                            request.setUserId(user.getId());
+                        }, this::mockGetUser ),
+                Pair.of( "cause", "user has to be in group" ) );
+
         wrongValues.put(
                 Pair.of(request -> request.setValue(-1), () -> {}),
                 Pair.of("value", "must be between 0 and 100") );
@@ -211,48 +230,72 @@ public class MarkControllerTest extends AbstractControllerTest<Mark, MarkRequest
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
-        Map<Map<String, Object>, Pair<String, Object>> map = new LinkedHashMap<>();
+    protected Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map = new LinkedHashMap<>();
 
         getPatchInvalidValues(map);
 
-        getCreateOrUpdateReturnNull();
         Course course = CourseBuilder.builder().build();
         map.put(
                 Map.of("courseId", course.getId()),
-                Pair.of( "cause", "course not found with id = " + course.getId() ) );
+                Pair.of(
+                        Pair.of( "cause", "course not found with id = " + course.getId() ),
+                        Pair.of( this::whenCreateOrUpdateReturnNull, () -> { mockGetCourse(); mockGetUser(); })
+                ));
 
         User user = UserBuilder.builder().build();
         map.put(
                 Map.of("userId", user.getId()),
-                Pair.of( "cause", "user not found with id = " + user.getId() ) );
+                Pair.of(
+                        Pair.of( "cause", "user not found with id = " + user.getId() ),
+                        Pair.of(this::whenCreateOrUpdateReturnNull, () -> { mockGetCourse(); mockGetUser(); })
+                ));
+
+        User userWithoutGroup = UserBuilder.builder().build();
+        map.put(
+                Map.of("userId", userWithoutGroup.getId()),
+                Pair.of(
+                        Pair.of( "cause", "user has to be in group" ),
+                        Pair.of(
+                                () -> when( userService.get( anyLong() ) ).thenReturn( userWithoutGroup ),
+                                this::mockGetUser)
+                ));
 
         map.put(
-                Map.of("value", -1),
-                Pair.of("value", "must be between 0 and 100") );
+                Map.of("value", "-1"),
+                Pair.of(
+                        Pair.of( "value", "must be between 0 and 100"),
+                        Pair.of(() -> {}, () -> {})
+                ));
         map.put(
-                Map.of("value", 101),
-                Pair.of("value", "must be between 0 and 100") );
+                Map.of("value", "101"),
+                Pair.of(
+                        Pair.of( "value", "must be between 0 and 100"),
+                        Pair.of(() -> {}, () -> {})
+                ));
 
         return map;
     }
 
-    private void getCreateOrUpdateReturnNull() {
+    private void whenCreateOrUpdateReturnNull() {
         when( courseService.get( anyLong() ) ).thenReturn( null );
         when( userService.get( anyLong() ) ).thenReturn( null );
     }
 
-    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map) {
         setupNullField(map, "courseId");
         setupNullField(map, "userId");
     }
 
-    private void setupNullField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+    private void setupNullField(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map, String fieldName) {
         Map<String, Object> fieldMap = new HashMap<>();
         fieldMap.put(fieldName, null);
         map.put(
                 fieldMap,
-                Pair.of( fieldName, "must not be null" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be null" ),
+                        Pair.of( () -> {}, () -> {} ) )
+                );
     }
 
     @Override

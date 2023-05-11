@@ -4,13 +4,16 @@ import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.ItemNotFoundException;
 import org.m.courses.exception.PatchFieldValidationException;
+import org.m.courses.exception.UserNotInGroupException;
 import org.m.courses.filtering.EntitySpecificationsBuilder;
 import org.m.courses.filtering.MarkSpecificationsBuilder;
 import org.m.courses.model.Course;
+import org.m.courses.model.Group;
 import org.m.courses.model.Mark;
 import org.m.courses.model.User;
 import org.m.courses.service.*;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.MARK_API;
+import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
 
 
 @RestController
@@ -112,7 +116,16 @@ public class MarkController extends AbstractController<Mark, MarkRequest, MarkRe
         if (user == null) {
             throw new ItemNotFoundException("user not found with id = " + userId );
         }
+        user.setGroup( getGroupWithCourses(user.getGroup()) );
         return user;
+    }
+
+    private Group getGroupWithCourses(Group group) {
+        if (group == null) {
+            throw new UserNotInGroupException();
+        }
+        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group", group.getId()) ).toSet() );
+        return group;
     }
     //git revert -m 1 3c561098a01f3042b8ee3e699445c0518f45c0f8
 

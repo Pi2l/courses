@@ -2,12 +2,9 @@ package org.m.courses.service;
 
 import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.MarkDao;
-import org.m.courses.dao.ScheduleDao;
 import org.m.courses.model.*;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Set;
 
 @Service

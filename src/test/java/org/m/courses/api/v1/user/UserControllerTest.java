@@ -251,8 +251,8 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
-        Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
+    protected Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map = new HashMap<>();
         mockIsUnique(false);
 
         getPatchInvalidValues(map);
@@ -260,7 +260,7 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
         return map;
     }
 
-    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map) {
         setupBlankField(map, "firstName");
         setupBlankField(map, "lastName");
         setupBlankField(map, "phoneNumber");
@@ -269,37 +269,59 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
 
         map.put(
                 Map.of("phoneNumber", "12345678901234567890123456789012345678901"),
-                Pair.of( "phoneNumber", "size must be between 0 and 20" ) );
+                Pair.of(
+                        Pair.of("phoneNumber", "size must be between 0 and 20"),
+                        Pair.of( () -> {}, () -> {} )
+                ));
 
         map.put(
                 Map.of("login", "notUniqueLogin"),//unqinue
-                Pair.of( "login", "must be unique" ) );
+                Pair.of(
+                        Pair.of("login", "must be unique"),
+                        Pair.of( () -> {}, () -> {} )
+                ));
 
         Map<String, Object> roleMap = new HashMap<>();
         roleMap.put("role", null);
         map.put(
                 roleMap,
-                Pair.of( "role", "must not be null" ) );
+                Pair.of(
+                        Pair.of("role", "must not be null"),
+                        Pair.of( () -> {}, () -> {} )
+                ));
 
-        when( groupService.get( anyLong() ) ).thenReturn( null );
         Group group = GroupBuilder.builder().build();
         map.put(
                 Map.of("groupId", group.getId()),
-                Pair.of( "cause", "group not found with id = " + group.getId() ) );
+                Pair.of(
+                        Pair.of("cause", "group not found with id = " + group.getId()),
+                        Pair.of(
+                                () -> when( groupService.get( anyLong() ) ).thenReturn( null ),
+                                this::mockGetGroup )
+                ));
     }
 
-    private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+    private void setupBlankField(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map, String fieldName) {
         Map<String, Object> fieldMap = new HashMap<>();
         map.put(
                 Map.of(fieldName, ""),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of( () -> {}, () -> {} )
+                ));
         map.put(
                 Map.of(fieldName, "   "),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of( () -> {}, () -> {} )
+                ));
         fieldMap.put(fieldName, null);
         map.put(
                 fieldMap,
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of( () -> {}, () -> {} )
+                ));
     }
 
     @Override
