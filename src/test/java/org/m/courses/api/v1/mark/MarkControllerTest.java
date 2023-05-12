@@ -188,9 +188,18 @@ public class MarkControllerTest extends AbstractControllerTest<Mark, MarkRequest
                 Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("entity cannot be null")), status().isBadRequest() ),
                 Pair.of( "cause", () -> "entity cannot be null" ) );
 
-//        map.put(
-//                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("group has not such course with courseId = 1")), status().isBadRequest() ),
-//                Pair.of( "cause", () -> "group has not such course with courseId = 1") );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("user must have USER role")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "user must have USER role") );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("user has to be in group")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "user has to be in group") );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("group has contain any course")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "group has contain any course") );
+        map.put(
+                Pair.of( () -> getCreateOrUpdateThrow(new IllegalArgumentException("user does not belong to that course")), status().isBadRequest() ),
+                Pair.of( "cause", () -> "user does not belong to that course") );
         return map;
     }
 
