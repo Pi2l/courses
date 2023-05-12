@@ -246,24 +246,25 @@ public abstract class AbstractControllerTest<
         getPatchInvalidValuesTestParameters().forEach( this::doPatchInvalidValuesTestParameters );
     }
 
-    private void doPatchInvalidValuesTestParameters(Map<String, Object> requestedMap, Pair<String, Object> valueProvider) {
+    private void doPatchInvalidValuesTestParameters(Map<String, Object>requestedMap, Pair<Pair<String, Object>, Pair<Runnable, Runnable>> valueProvider) {
         Entity entity = getNewEntity();
         whenGetEntity( any( Long.class ), entity );
 
         mockServiceCreateOrUpdateMethod( resultCaptor, whenUpdateInService( any( getEntityClass() ) ) );
-
+        valueProvider.getSecond().getFirst().run();
         try {
             mockMvc.perform( patch( getControllerPath() + "/{id}", entity.getId() )
                             .content( getJson(requestedMap) )
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
                     .andDo(print())
-                    .andExpect( jsonPath("$." + valueProvider.getFirst())
-                            .value(valueProvider.getSecond()) )
+                    .andExpect( jsonPath("$." + valueProvider.getFirst().getFirst())
+                            .value(valueProvider.getFirst().getSecond()) )
                     .andExpect( status().is4xxClientError() );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        valueProvider.getSecond().getSecond().run();
     }
 
     @Test
@@ -622,7 +623,7 @@ public abstract class AbstractControllerTest<
 
     protected abstract Map< Map<String, Object>, Pair<Function<Entity, Object>, Supplier<Object>> > getPatchValuesTestParameters();
 
-    protected abstract Map< Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters();
+    protected abstract Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters();
 
     protected Map< Consumer< Request >, Pair< Function<Entity, Object>, Object > > getCreateWithOptionalValuesTestParameters() {
         return new HashMap<>();

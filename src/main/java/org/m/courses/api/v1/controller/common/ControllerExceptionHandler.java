@@ -44,6 +44,14 @@ public class ControllerExceptionHandler {
         return errorMap;
     }
 
+    @ExceptionHandler(UserNotInGroupException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    Map<String, String> handler(UserNotInGroupException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Object> handlerValidationException(MethodArgumentNotValidException exception) {
         Map<String, String> validationErrorsMap = new HashMap<>();

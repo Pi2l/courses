@@ -53,6 +53,10 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
 
     @BeforeEach
     void init() {
+        mockGetCourse();
+    }
+
+    private void mockGetCourse() {
         when(courseService.get( anyLong() ))
                 .thenAnswer(answer -> CourseBuilder.builder().setId( answer.getArgument(0) ).build() );
     }
@@ -174,40 +178,56 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
-        Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
+    protected Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map = new HashMap<>();
 
         getPatchInvalidValues(map);
 
         return map;
     }
 
-    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map) {
         setupBlankField(map, "name");
 
         Course course1 = CourseBuilder.builder().setId(-1L).build();
         map.put(
                 Map.of("courseIds", "" + course1.getId() ),
-                Pair.of( "['courseIds[].<iterable element>']", "must be greater than or equal to 0") );
+                Pair.of(
+                        Pair.of("['courseIds[].<iterable element>']", "must be greater than or equal to 0"),
+                        Pair.of(() -> {}, () -> {})
+                ));
 
-        when( courseService.get(anyLong()) ).thenReturn(null);
         map.put(
                 Map.of("courseIds", "" +  CourseBuilder.builder().setId(1L).build().getId() ),
-                Pair.of("cause", "course not found with id = 1") );
+                Pair.of(
+                        Pair.of("cause", "course not found with id = 1"),
+                        Pair.of(
+                                () -> when( courseService.get(anyLong()) ).thenReturn(null),
+                                this::mockGetCourse)
+                ));
     }
 
-    private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+    private void setupBlankField(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map, String fieldName) {
         Map<String, Object> fieldMap = new HashMap<>();
         map.put(
                 Map.of(fieldName, ""),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of( fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
         map.put(
                 Map.of(fieldName, "   "),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of( fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
         fieldMap.put(fieldName, null);
         map.put(
                 fieldMap,
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of( fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
     }
 
     @Override

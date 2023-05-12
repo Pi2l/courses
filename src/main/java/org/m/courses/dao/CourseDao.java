@@ -44,4 +44,7 @@ public class CourseDao extends AbstractDao<Course> {
         return super.canModify(courseId)
                 || authorizationService.getCurrentUser().equals( get( courseId ).getTeacher() );
     }
+
+    // if current user is USER: only users that is in group that has such course, can get it
+    // if current user is TEACHER: can get only its own courses
 }

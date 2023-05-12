@@ -164,30 +164,47 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
-        Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
+    protected Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map = new HashMap<>();
 
         getPatchInvalidValues(map);
 
         return map;
     }
 
-    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map) {
         setupBlankField(map, "name");
-        map.put(Map.of("teacherId", 834L), Pair.of("cause", "teacher not found with id = 834") );
-        map.put(Map.of("lessonCount", 0), Pair.of("lessonCount", "must be between 1 and 9223372036854775807") );
+        map.put(Map.of("teacherId", 834L),
+                Pair.of(
+                        Pair.of("cause", "teacher not found with id = 834"),
+                        Pair.of( () -> {}, () -> {})
+                ));
+        map.put(Map.of("lessonCount", 0),
+                Pair.of(
+                        Pair.of("lessonCount", "must be between 1 and 9223372036854775807"),
+                        Pair.of( () -> {}, () -> {})
+                ));
     }
 
-    private void setupBlankField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+    private void setupBlankField(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map, String fieldName) {
         map.put(
                 Map.of(fieldName, ""),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
         map.put(
                 Map.of(fieldName, "   "),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
         map.put(
                 getNullValueMap(fieldName),
-                Pair.of( fieldName, "must not be blank" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be blank" ),
+                        Pair.of(() -> {}, () -> {})
+                ));
     }
 
     @Test

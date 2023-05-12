@@ -230,21 +230,28 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     }
 
     @Override
-    protected Map<Map<String, Object>, Pair<String, Object> > getPatchInvalidValuesTestParameters() {
-        Map<Map<String, Object>, Pair<String, Object>> map = new HashMap<>();
+    protected Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> getPatchInvalidValuesTestParameters() {
+        Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map = new HashMap<>();
 
         getPatchInvalidValues(map);
 
-        getCreateOrUpdateReturnNull();
         Course course = CourseBuilder.builder().build();
         map.put(
                 Map.of("courseId", course.getId()),
-                Pair.of( "cause", "course not found with id = " + course.getId() ) );
+                Pair.of(
+                        Pair.of("cause", "course not found with id = " + course.getId() ),
+                        Pair.of(
+                                this::getCreateOrUpdateReturnNull, () -> { mockGetCourse(); mockGetGroup(); } )
+                ));
 
         Group group = GroupBuilder.builder().build();
         map.put(
                 Map.of("groupId", group.getId()),
-                Pair.of( "cause", "group not found with id = " + group.getId() ) );
+                Pair.of(
+                        Pair.of("cause", "group not found with id = " + group.getId() ),
+                        Pair.of(
+                                this::getCreateOrUpdateReturnNull, () -> { mockGetCourse(); mockGetGroup(); } )
+                ));
         return map;
     }
 
@@ -253,19 +260,22 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
         when( groupService.get( anyLong() ) ).thenReturn( null );
     }
 
-    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<String, Object>> map) {
+    private void getPatchInvalidValues(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map) {
         setupNullField(map, "startAt");
         setupNullField(map, "endAt");
         setupNullField(map, "groupId");
         setupNullField(map, "courseId");
     }
 
-    private void setupNullField(Map<Map<String, Object>, Pair<String, Object>> map, String fieldName) {
+    private void setupNullField(Map<Map<String, Object>, Pair<Pair<String, Object>, Pair<Runnable, Runnable>>> map, String fieldName) {
         Map<String, Object> fieldMap = new HashMap<>();
         fieldMap.put(fieldName, null);
         map.put(
                 fieldMap,
-                Pair.of( fieldName, "must not be null" ) );
+                Pair.of(
+                        Pair.of(fieldName, "must not be null"),
+                        Pair.of( () -> {}, () -> {} )
+                ));
     }
 
     @Override
