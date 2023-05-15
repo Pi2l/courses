@@ -40,12 +40,13 @@ public abstract class AbstractController<
 
     private static final Pattern PATTERN = Pattern.compile("(\\w+?)(:|!_=|[!<>_]=?|=)(.*)");
 
+    @ResponseBody
     @GetMapping
     public PageResponse<Response> getAll(
             @RequestParam(defaultValue = "0", required = false) @PositiveOrZero Integer index,
             @RequestParam(defaultValue = "30", required = false) @Range(max = 100) Integer size,
-            @PathParam(value = "sort") Sort sort,
-            @PathParam(value = "filter") String filter
+            @RequestParam(required = false, value = "sort") Sort sort,
+            @RequestParam(required = false, value = "filter") String filter
             ) {
         sort = mapSortProperties( sort );
 
@@ -62,12 +63,14 @@ public abstract class AbstractController<
         return new PageResponse<>(responses, entityPage.getTotalElements(), entityPage.getNumber(), entityPage.getSize());
     }
 
+    @ResponseBody
     @GetMapping("/{id}")
     public Response get(@PathVariable Long id) {
         Entity entity = getEntity(id);
         return convertToResponse( entity );
     }
 
+    @ResponseBody
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Response create(@Validated({ CreateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
@@ -76,6 +79,7 @@ public abstract class AbstractController<
         return convertToResponse( createdEntity );
     }
 
+    @ResponseBody
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Response update(@PathVariable Long id, @Validated({ UpdateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
@@ -85,6 +89,7 @@ public abstract class AbstractController<
         return convertToResponse( updatedEntity );
     }
 
+    @ResponseBody
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Response patch(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
@@ -98,10 +103,15 @@ public abstract class AbstractController<
 
     protected abstract Entity patchRequest(Map<String, Object> requestBody, Entity entity);
 
+    @ResponseBody
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        getService().delete( id );
+        deleteEntity(id);
+    }
+
+    protected void deleteEntity(Long id) {
+        getService().delete(id);
     }
 
     protected Entity getEntity(Long id) {
