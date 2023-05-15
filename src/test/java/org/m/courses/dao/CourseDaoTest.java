@@ -1,19 +1,23 @@
 package org.m.courses.dao;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.CourseBuilder;
+import org.m.courses.builder.GroupBuilder;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Course;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
@@ -23,10 +27,19 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
     private CourseDao courseDao;
 
     @Autowired
+    private GroupDao groupDao;
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
     private CourseBuilder courseBuilder;
 
     @Autowired
     private UserBuilder userBuilder;
+
+    @Autowired
+    private GroupBuilder groupBuilder;
 
     protected AbstractDao<Course> getDao() {
         return courseDao;
@@ -55,11 +68,53 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         assertEquals(updatedCourse.getLessonCount(), courseFromDB.getLessonCount());
     }
 
+    @AfterEach
+    void clearDB() {
+        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
+
+        userDao.getAll().forEach( el -> { el.setGroup(null); userDao.update( el ); } );
+        groupDao.getAll().forEach( el -> groupDao.delete( el.getId() ) );
+        super.cleanDB();
+    }
+
+    @Test
+    void getCourseThatLeadsTeacher() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        User otherTeacher = userBuilder.setRole(Role.TEACHER).toDB();
+
+        Course teacherCourse = courseBuilder.setTeacher(teacher).toDB();
+        Course otherTeacherCourse = courseBuilder.setTeacher(otherTeacher).toDB();
+
+        AuthManager.loginAs( teacher );
+        Course teacherCourseFromDb = courseDao.get( teacherCourse.getId() );
+        assertEquals( teacherCourseFromDb, teacherCourse );
+
+        Course otherTeacherCourseFromDb = courseDao.get( otherTeacherCourse.getId() );
+        assertNull( otherTeacherCourseFromDb );
+    }
+
+    @Test
+    void getCourseAsUser() {
+        User teacher = userBuilder.setRole(Role.TEACHER).toDB();
+        Course courseForUser = courseBuilder.setTeacher(teacher).toDB();
+        Course courseNotForUser = courseBuilder.setTeacher(teacher).toDB();
+
+        Group group = groupBuilder.setCourses( Set.of(courseForUser) ).toDB();
+        User user = userBuilder.setRole(Role.USER).setGroup( group ).toDB();
+
+        AuthManager.loginAs( user );
+        Course fetchedCourseForUser = courseDao.get( courseForUser.getId() );
+        assertEquals(courseForUser, fetchedCourseForUser );
+
+        Course fetchedCourseNotForUser = courseDao.get( courseNotForUser.getId() );
+        assertNull( fetchedCourseNotForUser );
+    }
+
     @Test
     void saveCourseWithNullFieldsTest() {
         Course course = courseBuilder.buildNew();
         course.setName(null);
-        assertNotNullField(course, "name");
+        assertNotNullField(course);
     }
 
     @Test
@@ -77,7 +132,7 @@ public class CourseDaoTest extends AbstractDaoTest<Course>  {
         assertEquals( createdCourse, course );
     }
 
-    private void assertNotNullField(Course course, String fieldName) {
+    private void assertNotNullField(Course course) {
         DataIntegrityViolationException exception =
                 assertThrowsExactly( DataIntegrityViolationException.class, () -> courseDao.create(course) );
 

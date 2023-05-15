@@ -43,7 +43,7 @@ public class CourseBuilder {
     }
 
     private CourseBuilder initDefaultUser() {
-        long randomValue = Math.abs(new SecureRandom().nextLong()) % 10000;
+        long randomValue = Math.abs(new SecureRandom().nextLong()) % 1000000;
         this.course = new Course();
 
         setId(randomValue);

@@ -1,7 +1,9 @@
 package org.m.courses.model;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "course")
@@ -22,7 +24,9 @@ public class Course implements Identity<Long> {
 
     @Column(name = "lesson_count")
     private Integer lessonCount;
- 
+
+    @ManyToMany(mappedBy = "courses")
+    private Set<Group> groups = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -62,6 +66,14 @@ public class Course implements Identity<Long> {
 
     public void setLessonCount(Integer lessonCount) {
         this.lessonCount = lessonCount;
+    }
+
+    public Set<Group> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<Group> groups) {
+        this.groups = groups;
     }
 
     @Override
