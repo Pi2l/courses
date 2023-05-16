@@ -17,7 +17,7 @@ public class Group implements Identity<Long> {
     @Column(length = 20, unique = true)
     private String name;
 
-    @OneToMany
+    @OneToMany(mappedBy = "group")
     private Set<User> users = new HashSet<>();
 
     @ManyToMany

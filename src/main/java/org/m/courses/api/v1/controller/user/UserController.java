@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.user;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.ItemNotFoundException;
@@ -28,6 +29,7 @@ import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 
 @RestController
 @RequestMapping(USER_API)
+@Tag(name = "Users", description = "The Users API")
 public class UserController extends AbstractController<User, UserRequest, UserResponse> {
 
     private final UserService userService;

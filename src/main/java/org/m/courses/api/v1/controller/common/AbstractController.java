@@ -1,6 +1,9 @@
 package org.m.courses.api.v1.controller.common;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.hibernate.validator.constraints.Range;
 import org.m.courses.exception.IllegalFilteringOperationException;
 import org.m.courses.exception.ItemNotFoundException;
@@ -40,12 +43,23 @@ public abstract class AbstractController<
 
     private static final Pattern PATTERN = Pattern.compile("(\\w+?)(:|!_=|[!<>_]=?|=)(.*)");
 
+    @ResponseBody
     @GetMapping
+    @Operation(summary = "Get all entities", description = "Get all entities", tags = {"getAll"}, responses = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, parameters = {
+            @Parameter(name = "index", description = "Page index. The default value is 0", required = false, example = "0"),
+            @Parameter(name = "size", description = "Page size. The default value is 30", required = false, example = "10"),
+            @Parameter(name = "sort", description = "Sort field. The default sorting is ascending", required = false, example = "id,desc"),
+            @Parameter(name = "filter", description = "Filter field. The default is no filters", required = false,
+                    example = "field1=value1,field2!=value2,field3:value3,field4>value4,field5>=value5,field6<value6,field7<=value7"),
+    })
     public PageResponse<Response> getAll(
             @RequestParam(defaultValue = "0", required = false) @PositiveOrZero Integer index,
             @RequestParam(defaultValue = "30", required = false) @Range(max = 100) Integer size,
-            @PathParam(value = "sort") Sort sort,
-            @PathParam(value = "filter") String filter
+            @RequestParam(required = false, value = "sort") Sort sort,
+            @RequestParam(required = false, value = "filter") String filter
             ) {
         sort = mapSortProperties( sort );
 
@@ -62,22 +76,48 @@ public abstract class AbstractController<
         return new PageResponse<>(responses, entityPage.getTotalElements(), entityPage.getNumber(), entityPage.getSize());
     }
 
+    @ResponseBody
     @GetMapping("/{id}")
+    @Operation(summary = "Get entity by id", description = "Get entity by id", tags = {"get"}, responses = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "404", description = "Item not found"),
+            @ApiResponse(responseCode = "406", description = "Not Acceptable"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, parameters = {
+            @Parameter(name = "id", description = "Item id", example = "1", required = true),
+    })
     public Response get(@PathVariable Long id) {
         Entity entity = getEntity(id);
         return convertToResponse( entity );
     }
 
+    @ResponseBody
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create entity", description = "Create entity", tags = {"create"}, responses = {
+            @ApiResponse(responseCode = "201", description = "Entity created"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "403", description = "Access denied for user"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Entity to create", required = true))
     public Response create(@Validated({ CreateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
         Entity createdEntity = createEntity( requestBody.createEntity(), requestBody );
 
         return convertToResponse( createdEntity );
     }
 
+    @ResponseBody
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Update entity", description = "Update entity", tags = {"update"}, responses = {
+            @ApiResponse(responseCode = "204", description = "Entity updated"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "403", description = "Access denied for user"),
+            @ApiResponse(responseCode = "404", description = "Item not found"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, parameters = {
+            @Parameter(name = "id", description = "Item id", example = "1", required = true),
+    }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Entity to update", required = true))
     public Response update(@PathVariable Long id, @Validated({ UpdateValidationGroup.class, Default.class }) @RequestBody Request requestBody) {
         Entity entity = getEntity(id);
 
@@ -85,8 +125,18 @@ public abstract class AbstractController<
         return convertToResponse( updatedEntity );
     }
 
+    @ResponseBody
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Patch entity", description = "Patch entity", tags = {"patch"}, responses = {
+            @ApiResponse(responseCode = "204", description = "Entity patched"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "403", description = "Access denied for user"),
+            @ApiResponse(responseCode = "404", description = "Item not found"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, parameters = {
+            @Parameter(name = "id", description = "Item id", example = "1", required = true),
+    }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Map with field, value to update", required = true))
     public Response patch(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
         Entity entity = getEntity(id);
 
@@ -98,10 +148,23 @@ public abstract class AbstractController<
 
     protected abstract Entity patchRequest(Map<String, Object> requestBody, Entity entity);
 
+    @ResponseBody
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete entity", description = "Delete entity", tags = {"delete"}, responses = {
+            @ApiResponse(responseCode = "204", description = "Entity deleted"),
+            @ApiResponse(responseCode = "403", description = "Access denied for user"),
+            @ApiResponse(responseCode = "404", description = "Item not found"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
+    }, parameters = {
+            @Parameter(name = "id", description = "Item id", example = "1", required = true),
+    })
     public void delete(@PathVariable Long id) {
-        getService().delete( id );
+        deleteEntity(id);
+    }
+
+    protected void deleteEntity(Long id) {
+        getService().delete(id);
     }
 
     protected Entity getEntity(Long id) {

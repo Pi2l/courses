@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.schedule;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.ItemNotFoundException;
@@ -31,6 +32,7 @@ import static org.m.courses.filtering.specification.SpecificationUtil.buildEqual
 
 @RestController
 @RequestMapping(SCHEDULE_API)
+@Tag(name = "Schedules", description = "The Schedules API")
 public class ScheduleController extends AbstractController<Schedule, ScheduleRequest, ScheduleResponse> {
 
     private final ScheduleService scheduleService;

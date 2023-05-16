@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.mark;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.ItemNotFoundException;
@@ -29,6 +30,7 @@ import static org.m.courses.filtering.specification.SpecificationUtil.buildEqual
 
 @RestController
 @RequestMapping(MARK_API)
+@Tag(name = "Marks", description = "The Marks API")
 public class MarkController extends AbstractController<Mark, MarkRequest, MarkResponse> {
 
     private final MarkService markService;

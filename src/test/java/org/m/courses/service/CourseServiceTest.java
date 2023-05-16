@@ -1,25 +1,54 @@
 package org.m.courses.service;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.CourseBuilder;
+import org.m.courses.builder.GroupBuilder;
+import org.m.courses.dao.CourseDao;
+import org.m.courses.dao.GroupDao;
+import org.m.courses.dao.UserDao;
 import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.Course;
+import org.m.courses.model.Group;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class CourseServiceTest extends AbstractServiceTest<Course> {
 
+
+    @Autowired
+    private GroupBuilder groupBuilder;
+
     @Autowired
     private CourseService courseService;
 
     @Autowired
     private CourseBuilder courseBuilder;
+
+    @Autowired
+    private CourseDao courseDao;
+
+    @Autowired
+    private GroupDao groupDao;
+
+    @Autowired
+    private UserDao userDao;
+
+    @AfterEach
+    void cleanDB() {
+        AuthManager.loginAs( userBuilder.setRole(Role.ADMIN).build() );
+
+        userDao.getAll().forEach( el -> { el.setGroup(null); userDao.update( el ); } );
+        groupDao.getAll().forEach( el -> groupDao.delete( el.getId() ) );
+    }
 
     @Test
     void getAsAdminTest() {
@@ -109,6 +138,7 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
 
         Course course = courseBuilder.setTeacher(courseOwnerTeacher).toDB();
+        Group group = groupBuilder.setCourses( Set.of(course) ).toDB();
 
         AuthManager.loginAs( teacher );
         Course courseToUpdate = courseBuilder.setTeacher(teacher).buildNew();
@@ -149,10 +179,12 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     @Test
     void updateCourseAsUserTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
-        User user = userBuilder.setRole(Role.USER).toDB();
 
         Course course = courseBuilder.toDB();
         Course courseWithOwner = courseBuilder.setTeacher(teacher).toDB();
+
+        Group group = groupBuilder.setCourses( Set.of(course, courseWithOwner) ).toDB();
+        User user = userBuilder.setRole(Role.USER).setGroup(group).toDB();
 
         AuthManager.loginAs( user );
 

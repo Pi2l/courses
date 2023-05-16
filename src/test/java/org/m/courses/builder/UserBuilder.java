@@ -42,7 +42,7 @@ public class UserBuilder {
     }
 
     private UserBuilder initDefaultUser() {
-        long randomValue = Math.abs(new SecureRandom().nextLong()) % 10000;
+        long randomValue = Math.abs(new SecureRandom().nextLong()) % 1000000;
         this.user = new User();
 
         setId(randomValue);

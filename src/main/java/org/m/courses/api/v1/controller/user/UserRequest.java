@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.user;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Group;
 import org.m.courses.model.Role;
@@ -11,25 +12,32 @@ import javax.validation.constraints.Size;
 
 public class UserRequest extends AbstractRequest<User> {
 
+    @Schema(description = "First name", example = "firstname1")
     @NotBlank
     private String firstName;
 
+    @Schema(description = "Last name", example = "lastname1")
     @NotBlank
     private String lastName;
 
+    @Schema(description = "phone number", example = "0495434553", maxLength = 20)
     @NotBlank
     @Size(max = 20)
     private String phoneNumber;
 
+    @Schema(description = "login", example = "user")
     @NotBlank
     private String login;
 
+    @Schema(description = "password", example = "user")
     @NotBlank
     private String password;
 
+    @Schema(description = "role", example = "USER")
     @NotNull
     private Role role;
 
+    @Schema(description = "group id", example = "1", nullable = true)
     private Long groupId;
 
     public UserRequest() {

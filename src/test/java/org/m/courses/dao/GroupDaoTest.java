@@ -41,9 +41,6 @@ public class GroupDaoTest extends AbstractDaoTest<Group>  {
     protected void assertEntitiesEqual(Group updatedEntity, Group entityFromDB) {
         assertEquals(updatedEntity.getName(), entityFromDB.getName());
 
-        assertTrue( updatedEntity.getUsers().containsAll( entityFromDB.getUsers()) );
-        assertTrue( entityFromDB.getUsers().containsAll( updatedEntity.getUsers()) );
-
         assertTrue( updatedEntity.getCourses().containsAll( entityFromDB.getCourses()) );
         assertTrue( entityFromDB.getCourses().containsAll( updatedEntity.getCourses()) );
     }

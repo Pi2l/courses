@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.schedule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Schedule;
 
@@ -8,15 +9,19 @@ import java.time.ZonedDateTime;
 
 public class ScheduleRequest extends AbstractRequest<Schedule> {
 
+    @Schema(description = "Course id", example = "1")
     @NotNull
     private Long courseId;
 
+    @Schema(description = "Start at", example = "2023-04-28T13:15:25.25+03:00[Europe/Kyiv]", format = "date-time")
     @NotNull
     private ZonedDateTime startAt;
 
+    @Schema(description = "End at", example = "2024-04-28T13:15:25.25+03:00[Europe/Kyiv]", format = "date-time")
     @NotNull
     private ZonedDateTime endAt;
 
+    @Schema(description = "Group id", example = "1")
     @NotNull
     private Long groupId;
 
