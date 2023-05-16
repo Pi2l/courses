@@ -50,7 +50,6 @@ public abstract class AbstractControllerTest<
         Response extends AbstractResponse
         > {
 
-    private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
     protected MockMvc mockMvc;
 
     @Autowired

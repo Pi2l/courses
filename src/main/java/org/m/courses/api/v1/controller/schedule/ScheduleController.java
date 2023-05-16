@@ -16,9 +16,11 @@ import org.m.courses.service.GroupService;
 import org.m.courses.service.ScheduleService;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.criteria.Join;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
@@ -27,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.SCHEDULE_API;
-import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
 
 
 @RestController
@@ -100,8 +101,15 @@ public class ScheduleController extends AbstractController<Schedule, ScheduleReq
         if (group == null) {
             throw new ItemNotFoundException("group not found with id = " + groupId );
         }
-        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group", groupId) ).toSet() );
+        group.setCourses( courseService.getAll(Pageable.unpaged(), getCoursesSpecByGroupId(groupId) ).toSet() );
         return group;
+    }
+
+    private Specification<Course> getCoursesSpecByGroupId(Long groupId) {
+        return (root, cq, cb) -> {
+            Join<Course, Group> groupJoin = root.join("groups");
+            return cb.equal( groupJoin.get("id"), groupId );
+        };
     }
 
     private Course getCourse(Long courseId) {

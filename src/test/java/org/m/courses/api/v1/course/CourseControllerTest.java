@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.course;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.common.AbstractControllerTest;
 import org.m.courses.api.v1.controller.course.CourseController;
@@ -45,6 +46,11 @@ public class CourseControllerTest extends AbstractControllerTest<Course, CourseR
 
     @SpyBean
     private CourseSpecificationsBuilder courseSpecificationsBuilder;
+
+    @BeforeEach
+    void init() {
+        when(getService().get( anyLong() )).thenReturn( getNewEntity() );
+    }
 
     @MockBean
     private UserService userService;

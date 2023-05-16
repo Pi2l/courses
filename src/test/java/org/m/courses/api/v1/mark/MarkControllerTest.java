@@ -59,6 +59,7 @@ public class MarkControllerTest extends AbstractControllerTest<Mark, MarkRequest
     void init() {
         mockGetCourse();
         mockGetUser();
+        when(getService().get( anyLong() )).thenReturn( getNewEntity() );
     }
 
     private void mockGetUser() {
