@@ -49,16 +49,16 @@ public abstract class AbstractController<
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "500", description = "Internal Server Error")
     }, parameters = {
-            @Parameter(name = "index", description = "Page index. The default value is 0", required = false, example = "0"),
-            @Parameter(name = "size", description = "Page size. The default value is 30", required = false, example = "10"),
-            @Parameter(name = "sort", description = "Sort field. The default sorting is ascending", required = false, example = "id,desc"),
-            @Parameter(name = "filter", description = "Filter field. The default is no filters", required = false,
+            @Parameter(name = "index", description = "Page index. The default value is 0", example = "0"),
+            @Parameter(name = "size", description = "Page size. The default value is 30", example = "10"),
+            @Parameter(name = "sort", description = "Sort field. The default sorting is ascending", required = true, example = "{ \"sort\": [\n\"id,desc\"\n ] }"),
+            @Parameter(name = "filter", description = "Filter field. The default is no filters",
                     example = "field1=value1,field2!=value2,field3:value3,field4>value4,field5>=value5,field6<value6,field7<=value7"),
     })
     public PageResponse<Response> getAll(
             @RequestParam(defaultValue = "0", required = false) @PositiveOrZero Integer index,
             @RequestParam(defaultValue = "30", required = false) @Range(max = 100) Integer size,
-            @RequestParam(required = false, value = "sort") Sort sort,
+            @PathParam(value = "sort") Sort sort,
             @RequestParam(required = false, value = "filter") String filter
             ) {
         sort = mapSortProperties( sort );
@@ -160,6 +160,7 @@ public abstract class AbstractController<
             @Parameter(name = "id", description = "Item id", example = "1", required = true),
     })
     public void delete(@PathVariable Long id) {
+        getEntity(id);
         deleteEntity(id);
     }
 
@@ -192,7 +193,10 @@ public abstract class AbstractController<
             return Sort.unsorted();
         }
 
-        return sort;
+        List<Sort.Order> sorts = sort.stream()
+                .map(order -> new Sort.Order(order.getDirection(), order.getProperty(), order.getNullHandling()))
+                .collect(Collectors.toList());
+        return Sort.by( sorts );
     }
 
     protected Specification<Entity> getSpecificationFromFilter(String filter) {

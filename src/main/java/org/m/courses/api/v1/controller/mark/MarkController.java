@@ -15,9 +15,11 @@ import org.m.courses.model.User;
 import org.m.courses.service.*;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.criteria.Join;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
@@ -126,8 +128,15 @@ public class MarkController extends AbstractController<Mark, MarkRequest, MarkRe
         if (group == null) {
             throw new UserNotInGroupException();
         }
-        group.setCourses( courseService.getAll(Pageable.unpaged(), buildEqualSpec("group", group.getId()) ).toSet() );
+        group.setCourses( courseService.getAll(Pageable.unpaged(), getCoursesSpecByGroupId( group.getId() ) ).toSet() );
         return group;
+    }
+
+    private Specification<Course> getCoursesSpecByGroupId(Long groupId) {
+        return (root, cq, cb) -> {
+            Join<Course, Group> groupJoin = root.join("groups");
+            return cb.equal( groupJoin.get("id"), groupId );
+        };
     }
     //git revert -m 1 3c561098a01f3042b8ee3e699445c0518f45c0f8
 

@@ -55,6 +55,7 @@ public class UserControllerTest extends AbstractControllerTest<User, UserRequest
     private void init() {
         mockIsUnique(true);
         mockGetGroup();
+        when(getService().get( anyLong() )).thenReturn( getNewEntity() );
     }
 
     private void mockIsUnique(boolean value) {

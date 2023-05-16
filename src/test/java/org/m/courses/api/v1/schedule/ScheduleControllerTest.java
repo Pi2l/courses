@@ -17,6 +17,7 @@ import org.m.courses.model.Schedule;
 import org.m.courses.service.CourseService;
 import org.m.courses.service.GroupService;
 import org.m.courses.service.ScheduleService;
+import org.m.courses.service.UserService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -53,6 +54,9 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     @MockBean
     private CourseService courseService;
 
+    @MockBean
+    private UserService userService;
+
     @SpyBean
     private ScheduleSpecificationsBuilder scheduleSpecificationsBuilder;
 
@@ -60,6 +64,7 @@ public class ScheduleControllerTest extends AbstractControllerTest<Schedule, Sch
     void init() {
         mockGetCourse();
         mockGetGroup();
+        when(getService().get( anyLong() )).thenReturn( getNewEntity() );
     }
 
     private void mockGetGroup() {
