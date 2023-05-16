@@ -207,8 +207,10 @@ public class CourseServiceTest extends AbstractServiceTest<Course> {
     void deleteAsNotAdminTest() {
         User teacher = userBuilder.setRole(Role.TEACHER).toDB();
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
-        User user = userBuilder.setRole(Role.USER).toDB();
-        Course course = courseBuilder.toDB();
+
+        Course course = courseBuilder.setTeacher(teacher).toDB();
+        Group group = groupBuilder.setCourses( Set.of(course) ).toDB();
+        User user = userBuilder.setRole(Role.USER).setGroup( group ).toDB();
 
         AuthManager.loginAs( teacher );
         assertThrowsExactly(AccessDeniedException.class, () -> courseService.delete( course.getId() ) );
