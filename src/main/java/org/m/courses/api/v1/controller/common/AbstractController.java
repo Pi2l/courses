@@ -160,6 +160,7 @@ public abstract class AbstractController<
             @Parameter(name = "id", description = "Item id", example = "1", required = true),
     })
     public void delete(@PathVariable Long id) {
+        getEntity(id);
         deleteEntity(id);
     }
 

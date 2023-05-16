@@ -54,6 +54,7 @@ public class GroupControllerTest extends AbstractControllerTest<Group, GroupRequ
     @BeforeEach
     void init() {
         mockGetCourse();
+        when(getService().get( anyLong() )).thenReturn( getNewEntity() );
     }
 
     private void mockGetCourse() {
