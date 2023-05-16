@@ -23,6 +23,7 @@ import javax.validation.Validator;
 import javax.validation.groups.Default;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.USER_API;
 
@@ -57,51 +58,47 @@ public class UserController extends AbstractController<User, UserRequest, UserRe
     private void patchField(User user, Map.Entry< String, Object > field) {
         switch (field.getKey()) {
             case "firstName":
-                String firstName = conversionService.convert(field.getValue(), String.class);
-                validateField("firstName", firstName);
-                user.setFirstName( firstName );
+                writeValidValue( field, String.class, user, User :: setFirstName);
                 return;
             case "lastName":
-                String lastName = conversionService.convert(field.getValue(), String.class);
-                validateField("lastName", lastName);
-                user.setLastName( lastName );
+                writeValidValue( field, String.class, user, User :: setLastName);
                 return;
             case "phoneNumber":
-                String phoneNumber = conversionService.convert(field.getValue(), String.class);
-                validateField("phoneNumber", phoneNumber);
-                user.setPhoneNumber( phoneNumber );
+                writeValidValue( field, String.class, user, User :: setPhoneNumber);
                 return;
             case "login":
-                String login = conversionService.convert(field.getValue(), String.class);
-                validateField("login", login);
-                user.setLogin( login );
+                writeValidValue( field, String.class, user, User :: setLogin);
                 return;
             case "password":
-                String password = conversionService.convert(field.getValue(), String.class);
-                validateField("password", password);
-                user.setPassword( password );
+                writeValidValue( field, String.class, user, User :: setPassword);
                 return;
             case "role":
                 Object roleObject = field.getValue();
-                Role role;
+                Role role = null;
                 if (roleObject != null) {
                     role = Role.valueOf(String.valueOf( roleObject ));
-                } else {
-                    role = null;
                 }
                 validateField("role", role);
                 user.setRole( role );
                 return;
             case "groupId":
-                Long groupId = conversionService.convert(field.getValue(), Long.class);
-                validateField("groupId", groupId);
-
+                Long groupId = getValidValue( field, Long.class );
                 Group group = getGroup(groupId);
                 user.setGroup( group );
                 return;
             default:
                 throw new IllegalArgumentException();
         }
+    }
+
+    private <T> void writeValidValue(Map.Entry< String, Object > field, Class<T> clazz, User user, BiConsumer<User, T> setter){
+        T value = getValidValue(field,clazz );
+        setter.accept(user,value);
+    }
+    private <T> T getValidValue( Map.Entry< String, Object > field, Class<T> clazz ){
+        T value = conversionService.convert(field.getValue(), clazz );
+        validateField(field.getKey(), value);
+        return value;
     }
 
     private void validateField(String field, Object value) {
