@@ -192,7 +192,10 @@ public abstract class AbstractController<
             return Sort.unsorted();
         }
 
-        return sort;
+        List<Sort.Order> sorts = sort.stream()
+                .map(order -> new Sort.Order(order.getDirection(), order.getProperty(), order.getNullHandling()))
+                .collect(Collectors.toList());
+        return Sort.by( sorts );
     }
 
     protected Specification<Entity> getSpecificationFromFilter(String filter) {
