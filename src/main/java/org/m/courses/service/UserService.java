@@ -12,11 +12,13 @@ import java.util.Optional;
 public class UserService extends AbstractService<User> {
 
     private UserDao userDao;
+    private UserAuthorizationService userAuthorizationService;
 
     private BCryptPasswordEncoder passwordEncoder;
 
-    public UserService(UserDao userDao, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(UserDao userDao, UserAuthorizationService userAuthorizationService, BCryptPasswordEncoder passwordEncoder) {
         this.userDao = userDao;
+        this.userAuthorizationService = userAuthorizationService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -35,6 +37,7 @@ public class UserService extends AbstractService<User> {
     public User update(User user) {
         User oldUser = userDao.get( user.getId() );
         if (oldUser != null) {
+            verifyRole( oldUser, user );
 
             String password = user.getPassword();
             if (oldUser.getPassword().equals(password)) {
@@ -51,6 +54,12 @@ public class UserService extends AbstractService<User> {
         }
 
         return super.update( user );
+    }
+
+    private void verifyRole(User oldUser, User user) {
+        if ( !( userAuthorizationService.isAdmin() || oldUser.getRole().equals( user.getRole() )) ) {
+            throw new IllegalArgumentException("roles have to be the same");
+        }
     }
 
     public boolean isUnique(User user) {

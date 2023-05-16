@@ -155,6 +155,34 @@ public class UserServiceTest extends AbstractServiceTest<User> {
     }
 
     @Test
+    void updateRoleAsNotAdminTest() {
+        User user = userService.create( userBuilder.setRole(Role.USER).buildNew() );
+        User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
+
+        User userWithAdminRole = userBuilder
+                .setId( user.getId() )
+                .setRole(Role.ADMIN)
+                .build();
+        User userWithTeacherRole = userBuilder
+                .setId( user.getId() )
+                .setRole(Role.TEACHER)
+                .build();
+
+        AuthManager.loginAs( user );
+        Throwable ex = assertThrowsExactly(IllegalArgumentException.class, () -> userService.update( userWithAdminRole ) );
+        assertEquals(ex.getMessage(), "roles have to be the same");
+        ex = assertThrowsExactly(IllegalArgumentException.class, () -> userService.update( userWithTeacherRole ) );
+        assertEquals(ex.getMessage(), "roles have to be the same");
+
+        AuthManager.loginAs( admin );
+        User updatedUserWithTeacherRole = userService.update( userWithTeacherRole );
+        assertEntitiesEqual( userWithTeacherRole, updatedUserWithTeacherRole );
+
+        User updatedUserWithAdminRole = userService.update( userWithAdminRole );
+        assertEntitiesEqual( userWithAdminRole, updatedUserWithAdminRole  );
+    }
+
+    @Test
     void deleteAsNotAdminTest() {
         User admin = userService.create( userBuilder.setRole(Role.ADMIN).buildNew() );
         User user = userService.create( userBuilder.buildNew() );
