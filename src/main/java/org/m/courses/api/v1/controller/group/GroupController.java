@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.group;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.m.courses.api.v1.controller.common.AbstractController;
 import org.m.courses.api.v1.controller.common.UpdateValidationGroup;
 import org.m.courses.exception.ItemNotFoundException;
@@ -35,6 +36,7 @@ import static org.m.courses.filtering.specification.SpecificationUtil.buildEqual
 
 @RestController
 @RequestMapping(GROUP_API)
+@Tag(name = "Groups", description = "The Groups API")
 public class GroupController extends AbstractController<Group, GroupRequest, GroupResponse> {
 
     private final GroupService groupService;

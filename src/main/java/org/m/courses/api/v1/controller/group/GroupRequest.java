@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.group;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.m.courses.api.v1.controller.common.AbstractRequest;
 import org.m.courses.model.Group;
 
@@ -9,8 +10,11 @@ import java.util.Set;
 
 public class GroupRequest extends AbstractRequest<Group> {
 
+    @Schema(description = "Name", example = "name1")
     @NotBlank
     private String name;
+
+    @Schema(description = "Course ids", example = "[1,2]")
     private Set<@PositiveOrZero Long> courseIds;
 
     public GroupRequest() {
