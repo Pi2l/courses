@@ -39,24 +39,4 @@ public class CourseService extends AbstractService<Course> {
         validate(course);
         return super.update( course );
     }
-//
-//    @Override
-//    public void delete(Long id) {
-//        Course course = courseDao.get( id );
-//        Set<Group> groups = groupService.getAll(Pageable.unpaged(), getSpecification(course) ).toSet();
-//        groups.forEach( e -> e.getCourses().remove(course) );
-//
-//        course.setGroups( null );
-//        //        update(course);
-//        super.delete( id );
-//    }
-//
-//    private Specification<Group> getSpecification(Course course) {
-//        return (root, cq, cb) -> {
-//            Join<Group, Course> courseJoin = root.join("courses");
-//            root.fetch("groups", JoinType.LEFT);
-//
-//            return cb.equal( courseJoin.get("id"), course.getId() );
-//        };
-//    }
 }
