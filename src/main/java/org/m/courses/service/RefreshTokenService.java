@@ -43,7 +43,7 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
     public SpringUser getUserByToken(String refreshTokenStr) {
         RefreshToken refreshToken = get( buildEqualSpec("token", refreshTokenStr) );
         if (refreshToken == null) {
-            throw new IllegalArgumentException("");
+            throw new IllegalArgumentException("refresh token not found with " + refreshTokenStr);
         }
         return new SpringUser( userService.getDao().findByLogin( refreshToken.getLogin() ).get() );
     }
