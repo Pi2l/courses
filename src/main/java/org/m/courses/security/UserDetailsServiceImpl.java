@@ -1,7 +1,6 @@
-package org.m.courses.service;
+package org.m.courses.security;
 
 import org.m.courses.dao.UserDao;
-import org.m.courses.model.SpringUser;
 import org.m.courses.model.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

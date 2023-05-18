@@ -39,6 +39,11 @@ public abstract class AbstractDao<T extends Identity<Long>> {
                 .orElse(null);
     }
 
+    public T get(Specification<T> filter) {
+        return getRepository().findOne( filter )
+                .orElse(null);
+    }
+
     public T create(T entity) {
         if ( isAdmin() ) {
             return getRepository().save(entity);

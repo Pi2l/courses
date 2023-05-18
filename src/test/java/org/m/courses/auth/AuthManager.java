@@ -1,6 +1,6 @@
 package org.m.courses.auth;
 
-import org.m.courses.model.SpringUser;
+import org.m.courses.security.SpringUser;
 import org.m.courses.model.User;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

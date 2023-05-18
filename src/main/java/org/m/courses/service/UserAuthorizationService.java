@@ -2,7 +2,7 @@ package org.m.courses.service;
 
 import org.m.courses.exception.UserUnauthenticatedException;
 import org.m.courses.model.Role;
-import org.m.courses.model.SpringUser;
+import org.m.courses.security.SpringUser;
 import org.m.courses.model.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

@@ -1,5 +1,6 @@
-package org.m.courses.model;
+package org.m.courses.security;
 
+import org.m.courses.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

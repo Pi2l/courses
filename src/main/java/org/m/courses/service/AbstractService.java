@@ -24,6 +24,10 @@ public abstract class AbstractService<T extends Identity<Long>> {
         return getDao().get(id);
     }
 
+    public T get(Specification<T> filter) {
+        return getDao().get(filter);
+    }
+
     public T create(T entity) {
         if (entity == null) {
             throw new IllegalArgumentException("entity cannot be null");

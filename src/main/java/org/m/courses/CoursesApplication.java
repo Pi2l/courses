@@ -1,10 +1,9 @@
 package org.m.courses;
 
 import org.m.courses.model.Role;
-import org.m.courses.model.SpringUser;
+import org.m.courses.security.SpringUser;
 import org.m.courses.model.User;
 import org.m.courses.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

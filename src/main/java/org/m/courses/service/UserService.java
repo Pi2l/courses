@@ -23,7 +23,7 @@ public class UserService extends AbstractService<User> {
     }
 
     @Override
-    protected AbstractDao<User> getDao() {
+    protected UserDao getDao() {
         return userDao;
     }
 
