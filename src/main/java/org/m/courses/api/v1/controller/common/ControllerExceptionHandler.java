@@ -3,6 +3,7 @@ package org.m.courses.api.v1.controller.common;
 import org.m.courses.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -89,6 +90,15 @@ public class ControllerExceptionHandler {
 
     @ExceptionHandler(UserUnauthenticatedException.class)
     ResponseEntity<Object> handlerValidationException(UserUnauthenticatedException exception) {
+        Map<String, String> validationErrorsMap = new HashMap<>();
+
+        validationErrorsMap.put("", exception.getMessage());
+
+        return new ResponseEntity<>(validationErrorsMap, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    ResponseEntity<Object> handlerValidationException(BadCredentialsException exception) {
         Map<String, String> validationErrorsMap = new HashMap<>();
 
         validationErrorsMap.put("", exception.getMessage());

@@ -87,7 +87,7 @@ public class JwtService {
         return userDetailsService.loadUserByUsername( login );
     }
 
-    public String getLogin(String jwt ) {
+    public String getLogin(String jwt) {
         DecodedJWT decodedJWT = JWT.decode( jwt );
         return decodedJWT.getSubject();
     }
