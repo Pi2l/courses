@@ -16,11 +16,13 @@ import org.springframework.security.web.access.ExceptionTranslationFilter;
 
 import javax.servlet.Filter;
 
+import static org.m.courses.api.v1.controller.common.ApiPath.API;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private static final String EXCLUDED_PATH = "/api/v1/login";
+    private static final String EXCLUDED_PATH = "/api/login";
     private static final String AUTH_REQUIRED_PATH = "/**";
     private final UserDetailsServiceImpl userDetailsService;
 
@@ -32,9 +34,8 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService) throws Exception {
         http
                 .csrf().disable()
-                .httpBasic()
-                .and()
                 .authorizeRequests()
+                .antMatchers(API + "/login").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterAfter( getJwtAuthenticationFilter( jwtService ), ExceptionTranslationFilter.class)

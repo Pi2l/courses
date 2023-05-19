@@ -4,6 +4,7 @@ import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.RefreshTokenDao;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.security.SpringUser;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
@@ -28,12 +29,20 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
 
     @Override
     public RefreshToken create(RefreshToken entity) {
-        entity.setLogin( authorizationService.getCurrentUser().getLogin() );
+        String login = authorizationService.getCurrentUser().getLogin();
+
+        delete( buildEqualSpec("login", login) );
+
+        entity.setLogin( login );
         return super.create( entity );
     }
 
     public void delete(String refreshToken) {
-        RefreshToken token = get( buildEqualSpec("token", refreshToken) );
+        delete( buildEqualSpec("token", refreshToken) );
+    }
+
+    private void delete(Specification<RefreshToken> specification) {
+        RefreshToken token = get( specification );
         if (token == null) {
             return;
         }

@@ -19,10 +19,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.m.courses.api.v1.controller.common.ApiPath.API;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -147,6 +149,8 @@ public class AuthenticationControllerTest {
     @Test
     public void logoutTest() throws Exception {
         String refreshToken = "refreshToken1";
+        Authentication authentication = new UsernamePasswordAuthenticationToken("login1", "password1");
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         mockMvc.perform( post( API + "/logout" )
                         .contentType(MediaType.APPLICATION_JSON)
@@ -154,6 +158,7 @@ public class AuthenticationControllerTest {
                 .andExpect( status().isOk() );
 
         verify( refreshTokenService, times(1) ).delete( refreshToken );
+        assertEquals(null, SecurityContextHolder.getContext().getAuthentication());
     }
 
     private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken) {

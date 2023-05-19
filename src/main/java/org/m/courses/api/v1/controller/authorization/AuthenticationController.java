@@ -36,7 +36,7 @@ public class AuthenticationController {
         this.jwtService = jwtService;
     }
 
-    @PostMapping(path = "/login")
+    @PostMapping("/login")
     @ResponseBody
     public AuthenticationResponse authenticationRequest(@RequestBody AuthenticationRequest request) {
         String login = request.getLogin();
@@ -49,13 +49,15 @@ public class AuthenticationController {
         return buildAuthenticationResponse();
     }
 
-    @PostMapping(path = "/logout")
+    @PostMapping("/logout")
     @ResponseBody
     public void logout(@RequestParam @NotEmpty String refreshToken) {
         refreshTokenService.delete(refreshToken);
+        SecurityContextHolder.getContext().setAuthentication( null );
+        SecurityContextHolder.clearContext();
     }
 
-    @PostMapping(path = "/refresh")
+    @PostMapping("/refresh")
     @ResponseBody
     public AuthenticationResponse refreshToken(@RequestParam @NotEmpty String refreshToken) {
         validateRefreshToken(refreshToken);

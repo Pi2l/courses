@@ -16,6 +16,8 @@ import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.UUID;
 
+import static org.m.courses.filtering.specification.SpecificationUtil.buildEqualSpec;
+
 @Service
 public class JwtService {
 
@@ -84,6 +86,9 @@ public class JwtService {
 
     public UserDetails getUserDetailsByJwt( String jwtKey ) {
         String login = getLogin( jwtKey );
+        if ( refreshTokenService.get( buildEqualSpec("login", login) ) == null) {
+            login = null; // in order userDetailsService.loadUserByUsername throw UsernameNotFoundException
+        }
         return userDetailsService.loadUserByUsername( login );
     }
 

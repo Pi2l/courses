@@ -1,5 +1,6 @@
 package org.m.courses.api.v1.controller.common;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.m.courses.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -104,6 +105,14 @@ public class ControllerExceptionHandler {
         validationErrorsMap.put("", exception.getMessage());
 
         return new ResponseEntity<>(validationErrorsMap, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Map<String, String> handler(TokenExpiredException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
     }
 
     @ExceptionHandler(PatchFieldValidationException.class)

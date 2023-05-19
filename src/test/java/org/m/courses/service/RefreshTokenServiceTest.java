@@ -56,14 +56,19 @@ public class RefreshTokenServiceTest extends AbstractServiceTest<RefreshToken> {
 
     @Test
     void createTwoRefreshPerUserTokens() {
-        User admin = userBuilder.setRole(Role.ADMIN).buildNew();
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
 
         RefreshToken createdRefreshToken = refreshTokenService.create( buildNewEntity() );
         assertEquals( createdRefreshToken.getLogin(), admin.getLogin() );
+        assertNotNull( refreshTokenService.getUserByToken( createdRefreshToken.getToken() ));
 
-        Exception ex = assertThrowsExactly(DataIntegrityViolationException.class, () -> refreshTokenService.create( buildNewEntity() ) );
-        assertNotNull(ex.getMessage());
+        RefreshToken createdRefreshToken2 = refreshTokenService.create( buildNewEntity() );
+        assertEquals( createdRefreshToken2.getLogin(), admin.getLogin() );
+
+        Exception exception = assertThrowsExactly(IllegalArgumentException.class,
+                () -> refreshTokenService.getUserByToken( createdRefreshToken.getToken() ) );
+        assertEquals( exception.getMessage(), "refresh token not found with " + createdRefreshToken.getToken() );
     }
 
     @Test
