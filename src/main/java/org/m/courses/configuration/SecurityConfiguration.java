@@ -16,14 +16,22 @@ import org.springframework.security.web.access.ExceptionTranslationFilter;
 
 import javax.servlet.Filter;
 
-import static org.m.courses.api.v1.controller.common.ApiPath.API;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
 
     private static final String EXCLUDED_PATH = "/api/login";
-    private static final String AUTH_REQUIRED_PATH = "/**";
+    private static final String AUTH_REQUIRED_PATH = "/api/**";
+    private static final String OPENAPI_PATHS[] = {
+            "/swagger-ui/index.html",
+            "/swagger-ui/swagger-ui.css",
+            "/swagger-ui/index.css",
+            "/swagger-ui/swagger-ui-standalone-preset.js",
+            "/swagger-ui/swagger-ui-bundle.js",
+            "/swagger-ui/swagger-initializer.js",
+            "/swagger-ui/favicon-32x32.png",
+            "/v3/api-docs/swagger-config",
+            "/v3/api-docs" };
     private final UserDetailsServiceImpl userDetailsService;
 
     public SecurityConfiguration(UserDetailsServiceImpl userDetailsService) {
@@ -35,7 +43,8 @@ public class SecurityConfiguration {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers(API + "/login").permitAll()
+                .antMatchers(EXCLUDED_PATH).permitAll()
+                .antMatchers(OPENAPI_PATHS).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterAfter( getJwtAuthenticationFilter( jwtService ), ExceptionTranslationFilter.class)
