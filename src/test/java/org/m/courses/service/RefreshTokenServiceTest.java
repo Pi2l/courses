@@ -3,13 +3,13 @@ package org.m.courses.service;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.RefreshTokenBuilder;
+import org.m.courses.exception.TokenNotFoundException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.security.SpringUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -66,7 +66,7 @@ public class RefreshTokenServiceTest extends AbstractServiceTest<RefreshToken> {
         RefreshToken createdRefreshToken2 = refreshTokenService.create( buildNewEntity() );
         assertEquals( createdRefreshToken2.getLogin(), admin.getLogin() );
 
-        Exception exception = assertThrowsExactly(IllegalArgumentException.class,
+        Exception exception = assertThrowsExactly(TokenNotFoundException.class,
                 () -> refreshTokenService.getUserByToken( createdRefreshToken.getToken() ) );
         assertEquals( exception.getMessage(), "refresh token not found with " + createdRefreshToken.getToken() );
     }
@@ -92,7 +92,7 @@ public class RefreshTokenServiceTest extends AbstractServiceTest<RefreshToken> {
 
         String tokenNotInDb = "asdasfsdf";
         Exception exception =
-                assertThrowsExactly(IllegalArgumentException.class, () -> refreshTokenService.getUserByToken(tokenNotInDb) );
+                assertThrowsExactly(TokenNotFoundException.class, () -> refreshTokenService.getUserByToken(tokenNotInDb) );
         assertEquals( exception.getMessage(), "refresh token not found with " + tokenNotInDb);
 
         SpringUser springUser = refreshTokenService.getUserByToken( createdRefreshToken.getToken() );

@@ -68,7 +68,7 @@ public class JwtFilterTest {
     private void init() {
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
-                .addFilter( new JwtAuthenticationFilter("/api/**", "/api/login", jwtService) )
+                .addFilter( new JwtAuthenticationFilter("/api/**", new String[] { "/api/login" }, jwtService) )
                 .build();
     }
 

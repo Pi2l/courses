@@ -8,7 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -16,19 +15,24 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private RequestMatcher exludedPathMatcher;
+    private List<AntPathRequestMatcher> exludedPathMatchers;
     private RequestMatcher authRequiredPathMatcher;
     private JwtService jwtService;
 
-    public JwtAuthenticationFilter(String authRequiredPath, String excludePath, JwtService jwtService) {
+    public JwtAuthenticationFilter(String authRequiredPath, String[] excludedPaths, JwtService jwtService) {
         this.authRequiredPathMatcher = new AntPathRequestMatcher( authRequiredPath );
-        this.exludedPathMatcher = new AntPathRequestMatcher( excludePath );
+
+        this.exludedPathMatchers = Stream.of(excludedPaths)
+                .map(AntPathRequestMatcher::new).collect(Collectors.toList());
         this.jwtService = jwtService;
     }
 
@@ -54,18 +58,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication( auth );
 
             filterChain.doFilter( request, response );
-            return;
         } catch (SignatureVerificationException | TokenExpiredException exception) {
-
+            SecurityContextHolder.getContext().setAuthentication( null );
+            throw exception;
         }
-
-        SecurityContextHolder.getContext().setAuthentication( null );
     }
 
     private Authentication buildAuthenticationFromJwt(String jwtToken) {
         UserDetails userDetails = jwtService.getUserDetailsByJwt(jwtToken);
         return new UsernamePasswordAuthenticationToken( userDetails,
-                jwtService.getLogin(jwtToken),
+                userDetails.getUsername(),
                 userDetails.getAuthorities() );
     }
 
@@ -74,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean requiresAuthentication(HttpServletRequest request) {
-        if (exludedPathMatcher.matches( request )) {
+        if ( exludedPathMatchers.stream().anyMatch(el -> el.matches( request )) ) {
             return false;
         }
         return authRequiredPathMatcher.matches( request );

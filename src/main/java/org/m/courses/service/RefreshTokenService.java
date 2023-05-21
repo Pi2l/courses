@@ -2,6 +2,7 @@ package org.m.courses.service;
 
 import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.RefreshTokenDao;
+import org.m.courses.exception.TokenNotFoundException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.security.SpringUser;
 import org.springframework.data.jpa.domain.Specification;
@@ -52,7 +53,7 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
     public SpringUser getUserByToken(String refreshTokenStr) {
         RefreshToken refreshToken = get( buildEqualSpec("token", refreshTokenStr) );
         if (refreshToken == null) {
-            throw new IllegalArgumentException("refresh token not found with " + refreshTokenStr);
+            throw new TokenNotFoundException("refresh token not found with " + refreshTokenStr);
         }
         return new SpringUser( userService.getDao().findByLogin( refreshToken.getLogin() ).get() );
     }

@@ -2,11 +2,9 @@ package org.m.courses.api.v1.controller.authorization;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.m.courses.model.User;
 import org.m.courses.security.SpringUser;
 import org.m.courses.security.jwt.JwtService;
 import org.m.courses.service.RefreshTokenService;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotEmpty;
-
 import java.util.List;
 
 import static org.m.courses.api.v1.controller.common.ApiPath.API;
@@ -46,7 +43,7 @@ public class AuthenticationController {
                 .authenticate( new UsernamePasswordAuthenticationToken( login, password ) );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return buildAuthenticationResponse();
+        return buildAuthenticationResponse( jwtService.generateRefreshToken() );
     }
 
     @PostMapping("/logout")
@@ -60,7 +57,6 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     @ResponseBody
     public AuthenticationResponse refreshToken(@RequestParam @NotEmpty String refreshToken) {
-        validateRefreshToken(refreshToken);
         SpringUser springUser = refreshTokenService.getUserByToken( refreshToken );
 
         Authentication authentication =
@@ -68,11 +64,10 @@ public class AuthenticationController {
                         springUser,
                         springUser.getUser().getLogin(),
                         List.of(new SimpleGrantedAuthority("ROLE_" + springUser.getUser().getRole())) );
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        refreshTokenService.delete(refreshToken);
-        return buildAuthenticationResponse();
+        validateRefreshToken(refreshToken);
+        return buildAuthenticationResponse( refreshToken );
     }
 
     private void validateRefreshToken(String refreshToken){
@@ -80,14 +75,15 @@ public class AuthenticationController {
             jwtService.verify(refreshToken);
         } catch ( TokenExpiredException expiredException ){
             refreshTokenService.delete( refreshToken );
+            SecurityContextHolder.getContext().setAuthentication( null );
             throw expiredException;
         }
     }
 
-    private AuthenticationResponse buildAuthenticationResponse() {
+    private AuthenticationResponse buildAuthenticationResponse(String refreshToken) {
         return new AuthenticationResponse(
                 jwtService.generateAccessToken(),
-                jwtService.generateRefreshToken(),
+                refreshToken,
                 jwtService.getAccessTokenExpirationInMinutes(),
                 jwtService.getRefreshTokenExpirationInMinutes() );
     }

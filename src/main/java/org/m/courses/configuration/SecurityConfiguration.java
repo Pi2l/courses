@@ -10,9 +10,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.servlet.Filter;
 
@@ -20,8 +23,8 @@ import javax.servlet.Filter;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private static final String EXCLUDED_PATH = "/api/login";
     private static final String AUTH_REQUIRED_PATH = "/api/**";
+    private static final String EXCLUDED_PATHS[] = { "/api/login", "/api/refresh" };
     private static final String OPENAPI_PATHS[] = {
             "/swagger-ui/index.html",
             "/swagger-ui/swagger-ui.css",
@@ -42,10 +45,16 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService) throws Exception {
         http
                 .csrf().disable()
+                .cors()
+                .and()
+                .headers().frameOptions().sameOrigin()
+                .and()
                 .authorizeRequests()
-                .antMatchers(EXCLUDED_PATH).permitAll()
+                .antMatchers(EXCLUDED_PATHS).permitAll()
                 .antMatchers(OPENAPI_PATHS).permitAll()
                 .anyRequest().authenticated()
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilterAfter( getJwtAuthenticationFilter( jwtService ), ExceptionTranslationFilter.class)
                 .userDetailsService(userDetailsService)
@@ -55,7 +64,7 @@ public class SecurityConfiguration {
     }
 
     private Filter getJwtAuthenticationFilter(JwtService jwtService) {
-        return new JwtAuthenticationFilter(AUTH_REQUIRED_PATH, EXCLUDED_PATH, jwtService);
+        return new JwtAuthenticationFilter(AUTH_REQUIRED_PATH, EXCLUDED_PATHS, jwtService);
     }
 
     @Bean
@@ -68,4 +77,16 @@ public class SecurityConfiguration {
       return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public WebMvcConfigurer addCorsMappings() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:4200/")
+                        .allowedMethods("*")
+                        .allowedHeaders("*");;
+            }
+        };
+    }
 }

@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.m.courses.api.v1.controller.common.ApiPath.API;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -133,17 +133,14 @@ public class AuthenticationControllerTest {
         when( refreshTokenService.getUserByToken(refreshToken) )
                 .thenReturn( springUser );
 
-        String accessToken = "accessToken";
-        String newRefreshToken = "newRefreshToken";
-        AuthenticationResponse response = mockJwtGenerate(accessToken, newRefreshToken);
+        String accessToken = "newAccessToken";
+        AuthenticationResponse response = mockJwtGenerate(accessToken, refreshToken);
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
                         .param( "refreshToken", refreshToken) )
                 .andExpect( content().json( getJson(response) ) )
                 .andExpect( status().isOk() );
-
-        verify( refreshTokenService, times(1) ).delete( refreshToken );
     }
 
     @Test
@@ -158,7 +155,7 @@ public class AuthenticationControllerTest {
                 .andExpect( status().isOk() );
 
         verify( refreshTokenService, times(1) ).delete( refreshToken );
-        assertEquals(null, SecurityContextHolder.getContext().getAuthentication());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken) {

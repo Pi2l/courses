@@ -38,6 +38,14 @@ public class ControllerExceptionHandler {
         return errorMap;
     }
 
+    @ExceptionHandler(TokenNotFoundException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    Map<String, String> handler(TokenNotFoundException exception) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("cause", exception.getMessage());
+        return errorMap;
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Map<String, String> handler(IllegalArgumentException exception) {
