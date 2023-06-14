@@ -60,7 +60,10 @@ public class JwtService {
     }
 
     public String generateRefreshToken(String login) {
-        int tag = UUID.randomUUID().hashCode(); // is tag unique?
+        int tag;
+        do {
+            tag = UUID.randomUUID().hashCode();
+        } while ( !refreshTokenService.isTagUnique(tag) );
         return generateRefreshToken( login, tag );
     }
 
@@ -125,7 +128,7 @@ public class JwtService {
         return refreshTokenExpirationInMinutes;
     }
 
-    public String generateRefreshToken(String refreshTokenStr, String login) {
+    public String generateRefreshTokenSuccessor(String refreshTokenStr, String login) {
         RefreshToken notActiveRefreshToken = refreshTokenService.get( getNotActiveTokenSpec(refreshTokenStr) );
         if (notActiveRefreshToken != null) {
             revokeDescendantRefreshTokens( notActiveRefreshToken );

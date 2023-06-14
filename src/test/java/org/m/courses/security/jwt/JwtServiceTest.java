@@ -3,6 +3,7 @@ package org.m.courses.security.jwt;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.junit.jupiter.api.Test;
+import org.m.courses.api.v1.common.ResultCaptor;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
@@ -18,8 +19,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.jpa.domain.Specification;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class JwtServiceTest extends Autologinable {
@@ -86,8 +86,8 @@ public class JwtServiceTest extends Autologinable {
         AuthManager.loginAs( admin );
 
         String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
-        String refreshTokenStr2 = jwtService.generateRefreshToken(refreshTokenStr1, admin.getLogin() );
-        String refreshTokenStr3 = jwtService.generateRefreshToken(refreshTokenStr2, admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr1, admin.getLogin() );
+        String refreshTokenStr3 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr2, admin.getLogin() );
 
         RefreshToken refreshToken1 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr1) );
         RefreshToken refreshToken2 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr2) );
@@ -107,13 +107,13 @@ public class JwtServiceTest extends Autologinable {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
         String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
-        String refreshTokenStr2 = jwtService.generateRefreshToken(refreshTokenStr1, admin.getLogin() );
-        String refreshTokenStr3 = jwtService.generateRefreshToken(refreshTokenStr2, admin.getLogin() );
-        String refreshTokenStr4 = jwtService.generateRefreshToken(refreshTokenStr3, admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr1, admin.getLogin() );
+        String refreshTokenStr3 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr2, admin.getLogin() );
+        String refreshTokenStr4 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr3, admin.getLogin() );
 
-        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshToken(refreshTokenStr3, admin.getLogin()) );
+        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshTokenSuccessor(refreshTokenStr3, admin.getLogin()) );
         AuthManager.loginAs( admin );
-        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshToken(refreshTokenStr4, admin.getLogin()) );
+        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshTokenSuccessor(refreshTokenStr4, admin.getLogin()) );
 
         RefreshToken refreshToken1 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr1) );
         RefreshToken refreshToken2 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr2) );

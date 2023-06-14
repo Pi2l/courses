@@ -48,6 +48,7 @@ public class RefreshTokenBuilder {
         setLogin( "Login_" + randomValue );
         setReplacedBy(null);
         setIsActive(true);
+        setTag((int) randomValue);
         return this;
     }
 
@@ -73,6 +74,11 @@ public class RefreshTokenBuilder {
 
     public RefreshTokenBuilder setIsActive(boolean isActive) {
         refreshToken.setIsActive(isActive);
+        return this;
+    }
+
+    public RefreshTokenBuilder setTag(int tag) {
+        refreshToken.setTag( tag );
         return this;
     }
 }

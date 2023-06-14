@@ -51,4 +51,8 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
     public boolean isTokenUnique(String refreshTokenStr) {
         return get( buildEqualSpec("token", refreshTokenStr) ) == null;
     }
+
+    public boolean isTagUnique(int tag) {
+        return get( buildEqualSpec("tag", tag) ) == null;
+    }
 }

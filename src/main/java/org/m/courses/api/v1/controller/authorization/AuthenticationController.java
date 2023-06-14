@@ -69,7 +69,7 @@ public class AuthenticationController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         validateRefreshToken(refreshTokenStr);
 
-        String newRefreshToken = jwtService.generateRefreshToken( refreshTokenStr, springUser.getUser().getLogin() );
+        String newRefreshToken = jwtService.generateRefreshTokenSuccessor( refreshTokenStr, springUser.getUser().getLogin() );
         return buildAuthenticationResponse( newRefreshToken );
     }
 

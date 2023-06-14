@@ -138,7 +138,7 @@ public class AuthenticationControllerTest {
         SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
         when( refreshTokenService.getUserByToken(refreshToken) )
                 .thenReturn( springUser );
-        when( jwtService.generateRefreshToken(refreshToken, springUser.getUser().getLogin()) ).thenReturn( newRefreshToken.getToken() );
+        when( jwtService.generateRefreshTokenSuccessor(refreshToken, springUser.getUser().getLogin()) ).thenReturn( newRefreshToken.getToken() );
 
         String newAccessToken = "newAccessToken";
         String newRefreshTokenStr = newRefreshToken.getToken();
@@ -158,7 +158,7 @@ public class AuthenticationControllerTest {
         SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
         when( refreshTokenService.getUserByToken(refreshToken) )
                 .thenReturn( springUser );
-        when( jwtService.generateRefreshToken(refreshToken, springUser.getUser().getLogin()) ).thenThrow( AccessDeniedException.class );
+        when( jwtService.generateRefreshTokenSuccessor(refreshToken, springUser.getUser().getLogin()) ).thenThrow( AccessDeniedException.class );
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)

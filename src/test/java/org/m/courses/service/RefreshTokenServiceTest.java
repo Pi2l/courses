@@ -1,5 +1,6 @@
 package org.m.courses.service;
 
+import org.hibernate.boot.spi.AbstractDelegatingMetadataBuilderImplementor;
 import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.RefreshTokenBuilder;
@@ -59,16 +60,16 @@ public class RefreshTokenServiceTest extends AbstractServiceTest<RefreshToken> {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
 
-        RefreshToken createdRefreshToken = refreshTokenService.create( buildNewEntity() );
-        assertEquals( createdRefreshToken.getLogin(), admin.getLogin() );
+        createRefreshToken(admin);
+        createRefreshToken(admin);
+    }
+
+    private void createRefreshToken(User user) {
+        RefreshToken refreshToken = refreshTokenBuilder.setLogin(user.getLogin()).buildNew();
+        RefreshToken createdRefreshToken = refreshTokenService.create( refreshToken );
+        assertEquals( createdRefreshToken.getLogin(), user.getLogin() );
         assertNotNull( refreshTokenService.getUserByToken( createdRefreshToken.getToken() ));
-
-        RefreshToken createdRefreshToken2 = refreshTokenService.create( buildNewEntity() );
-        assertEquals( createdRefreshToken2.getLogin(), admin.getLogin() );
-
-        Exception exception = assertThrowsExactly(TokenNotFoundException.class,
-                () -> refreshTokenService.getUserByToken( createdRefreshToken.getToken() ) );
-        assertEquals( exception.getMessage(), "refresh token not found with " + createdRefreshToken.getToken() );
+        assertEquals( refreshTokenService.getUserByToken( createdRefreshToken.getToken() ).getUser(), user);
     }
 
     @Test
@@ -88,14 +89,15 @@ public class RefreshTokenServiceTest extends AbstractServiceTest<RefreshToken> {
     void getUserByToken() {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
-        RefreshToken createdRefreshToken = refreshTokenService.create( buildNewEntity() );
 
         String tokenNotInDb = "asdasfsdf";
         Exception exception =
                 assertThrowsExactly(TokenNotFoundException.class, () -> refreshTokenService.getUserByToken(tokenNotInDb) );
         assertEquals( exception.getMessage(), "refresh token not found with " + tokenNotInDb);
 
-        SpringUser springUser = refreshTokenService.getUserByToken( createdRefreshToken.getToken() );
+        RefreshToken refreshToken = refreshTokenBuilder.setLogin(admin.getLogin()).buildNew();
+        refreshTokenService.create( refreshToken );
+        SpringUser springUser = refreshTokenService.getUserByToken( refreshToken.getToken() );
         assertEquals( springUser.getUser(), admin );
     }
 }
