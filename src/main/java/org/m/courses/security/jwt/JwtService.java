@@ -4,15 +4,23 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.exception.TokenNotFoundException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.security.UserDetailsServiceImpl;
 import org.m.courses.service.RefreshTokenService;
 import org.m.courses.service.UserAuthorizationService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.Date;
 import java.util.UUID;
 
@@ -48,15 +56,27 @@ public class JwtService {
 
     public String generateAccessToken() {
         return generateToken( userAuthorizationService.getCurrentUser().getLogin(),
-                expirationDate( accessTokenExpirationInMinutes ) );
+                getExpirationDate( accessTokenExpirationInMinutes ) );
     }
 
-    public String generateRefreshToken() {
-        Date expirationDate = expirationDate( refreshTokenExpirationInMinutes );
-        String refreshTokenStr = generateToken( UUID.randomUUID().toString(), expirationDate );
+    public String generateRefreshToken(String login) {
+        int tag = UUID.randomUUID().hashCode(); // is tag unique?
+        return generateRefreshToken( login, tag );
+    }
+
+    public String generateRefreshToken(String login, int tag) {
+        Date expirationDate = getExpirationDate( refreshTokenExpirationInMinutes );
+        String refreshTokenStr;
+        do {
+            refreshTokenStr = generateToken(UUID.randomUUID().toString(), expirationDate);
+        } while ( !refreshTokenService.isTokenUnique(refreshTokenStr) );
 
         RefreshToken refreshToken = new RefreshToken( );
         refreshToken.setToken( refreshTokenStr );
+        refreshToken.setLogin( login );
+        refreshToken.setIsActive( true );
+        refreshToken.setReplacedByToken( null );
+        refreshToken.setTag( tag );
         refreshTokenService.create( refreshToken );
 
         return refreshTokenStr;
@@ -66,16 +86,16 @@ public class JwtService {
         return JWT.create()
                 .withIssuer( "Web" )
                 .withSubject( subject )
-                .withIssuedAt( currentDate() )
+                .withIssuedAt( getCurrentDate() )
                 .withExpiresAt( expirationDate )
                 .sign( algorithm );
     }
 
-    private Date currentDate() {
+    private Date getCurrentDate() {
         return new Date( System.currentTimeMillis() );
     }
 
-    private Date expirationDate( int expirationInMinutes ) {
+    private Date getExpirationDate( int expirationInMinutes ) {
         return new Date( System.currentTimeMillis() + expirationInMinutes * 1000L * 60 );
     }
 
@@ -103,5 +123,70 @@ public class JwtService {
 
     public Integer getRefreshTokenExpirationInMinutes() {
         return refreshTokenExpirationInMinutes;
+    }
+
+    public String generateRefreshToken(String refreshTokenStr, String login) {
+        RefreshToken notActiveRefreshToken = refreshTokenService.get( getNotActiveTokenSpec(refreshTokenStr) );
+        if (notActiveRefreshToken != null) {
+            revokeDescendantRefreshTokens( notActiveRefreshToken );
+            SecurityContextHolder.getContext().setAuthentication( null );
+            throw new AccessDeniedException();
+        }
+
+        RefreshToken refreshToken = refreshTokenService.get( getTokenSpec(refreshTokenStr) );
+        return rotateRefreshToken(refreshToken, login);
+    }
+
+    private String rotateRefreshToken(RefreshToken activeRefreshToken, String login) {
+        String newRefreshToken = this.generateRefreshToken(login, activeRefreshToken.getTag() );
+        revokeRefreshToken(activeRefreshToken, newRefreshToken);
+        return newRefreshToken;
+    }
+
+    private void revokeRefreshToken(RefreshToken activeRefreshToken, String newRefreshToken) {
+        activeRefreshToken.setReplacedByToken(newRefreshToken);
+        activeRefreshToken.setIsActive( false );
+        refreshTokenService.update(activeRefreshToken);
+    }
+
+    private void revokeDescendantRefreshTokens(RefreshToken refreshToken) {
+        String replacedByToken = refreshToken.getReplacedByToken();
+
+        if ( replacedByToken == null || replacedByToken.isBlank() ) {
+            refreshToken.setIsActive(false);
+            refreshTokenService.update( refreshToken );
+            return;
+        }
+
+        RefreshToken childRefreshToken = refreshTokenService.get( getTokenSpec( replacedByToken ) );
+        revokeDescendantRefreshTokens( childRefreshToken );
+    }
+
+    private Specification<RefreshToken> getTokenSpec(String refreshToken) {
+        return (root, query, criteriaBuilder) -> getTokenPredicate( root, query, criteriaBuilder, refreshToken );
+    }
+
+    private Predicate getTokenPredicate(Root<RefreshToken> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, String refreshToken) {
+        return criteriaBuilder.equal( root.get("token"), refreshToken );
+    }
+
+    private Specification<RefreshToken> getNotActiveTokenSpec(String refreshToken) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.and(
+                criteriaBuilder.isFalse(root.get("isActive")),
+//                criteriaBuilder.isNotNull(root.get("replacedByToken")),// ???????
+                getTokenPredicate(root, query, criteriaBuilder, refreshToken));
+    }
+
+    public void removeDescendantRefreshTokens(String refreshTokenStr) {
+        RefreshToken refreshToken = refreshTokenService.get( getTokenSpec(refreshTokenStr) );
+        if (refreshToken == null) {
+            throw new TokenNotFoundException("");
+        }
+
+        refreshTokenService.delete( whereTagEquals(refreshToken.getTag()) );
+    }
+
+    private Specification<RefreshToken> whereTagEquals(Integer tag) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal( root.get("tag"), tag );
     }
 }

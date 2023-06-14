@@ -28,21 +28,11 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
         return tokenDao;
     }
 
-    @Override
-    public RefreshToken create(RefreshToken entity) {
-        String login = authorizationService.getCurrentUser().getLogin();
-
-        delete( buildEqualSpec("login", login) );
-
-        entity.setLogin( login );
-        return super.create( entity );
-    }
-
     public void delete(String refreshToken) {
         delete( buildEqualSpec("token", refreshToken) );
     }
 
-    private void delete(Specification<RefreshToken> specification) {
+    public void delete(Specification<RefreshToken> specification) {
         RefreshToken token = get( specification );
         if (token == null) {
             return;
@@ -56,5 +46,9 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
             throw new TokenNotFoundException("refresh token not found with " + refreshTokenStr);
         }
         return new SpringUser( userService.getDao().findByLogin( refreshToken.getLogin() ).get() );
+    }
+
+    public boolean isTokenUnique(String refreshTokenStr) {
+        return get( buildEqualSpec("token", refreshTokenStr) ) == null;
     }
 }

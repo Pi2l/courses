@@ -1,12 +1,16 @@
 package org.m.courses.api.v1.authentication;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.m.courses.api.v1.controller.authorization.AuthenticationController;
 import org.m.courses.api.v1.controller.authorization.AuthenticationResponse;
+import org.m.courses.builder.RefreshTokenBuilder;
 import org.m.courses.builder.UserBuilder;
+import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.model.RefreshToken;
 import org.m.courses.security.SpringUser;
 import org.m.courses.security.jwt.JwtService;
 import org.m.courses.service.RefreshTokenService;
@@ -86,7 +90,7 @@ public class AuthenticationControllerTest {
 
         verify( authenticationManager, times(1) ).authenticate( authentication );
         verify( jwtService, times(1) ).generateAccessToken();
-        verify( jwtService, times(1) ).generateRefreshToken();
+        verify( jwtService, times(1) ).generateRefreshToken("login1");
         verify( jwtService, times(1) ).getAccessTokenExpirationInMinutes();
         verify( jwtService, times(1) ).getRefreshTokenExpirationInMinutes();
     }
@@ -98,11 +102,12 @@ public class AuthenticationControllerTest {
 
         String accessToken = "accessToken";
         String refreshToken = "refreshToken";
-        AuthenticationResponse response = mockJwtGenerate(accessToken, refreshToken);
+        AuthenticationResponse response = mockJwtGenerate(accessToken, refreshToken, "login1");
 
         mockMvc.perform( post( API + "/login" )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content( "{\"login\": \"login1\", \"password\": \"password1\"}" ) )
+                .andDo(print())
                 .andExpect( content().json( getJson(response) ) )
                 .andExpect( status().isOk() );
 
@@ -116,7 +121,7 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshToken", refreshToken) )
+                        .param( "refreshTokenStr", refreshToken) )
                 .andDo( print() )
                 .andExpect( jsonPath("$.cause").value( "refresh token not found with " + refreshToken ) )
                 .andExpect( status().isBadRequest() );
@@ -128,19 +133,53 @@ public class AuthenticationControllerTest {
     @Test
     public void getNewRefreshTokenTest() throws Exception {
         String refreshToken = "refreshToken1";
+        RefreshToken newRefreshToken = RefreshTokenBuilder.builder().build();
 
         SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
         when( refreshTokenService.getUserByToken(refreshToken) )
                 .thenReturn( springUser );
+        when( jwtService.generateRefreshToken(refreshToken, springUser.getUser().getLogin()) ).thenReturn( newRefreshToken.getToken() );
 
-        String accessToken = "newAccessToken";
-        AuthenticationResponse response = mockJwtGenerate(accessToken, refreshToken);
+        String newAccessToken = "newAccessToken";
+        String newRefreshTokenStr = newRefreshToken.getToken();
+        AuthenticationResponse response = mockJwtGenerate(newAccessToken, newRefreshTokenStr, springUser.getUser().getLogin(), newRefreshTokenStr);
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshToken", refreshToken) )
+                        .param( "refreshTokenStr", refreshToken) )
                 .andExpect( content().json( getJson(response) ) )
                 .andExpect( status().isOk() );
+    }
+
+    @Test
+    public void getRefreshTokenWithNotActiveRefreshTokenTest() throws Exception {
+        String refreshToken = "NotActiveRefreshToken";
+
+        SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
+        when( refreshTokenService.getUserByToken(refreshToken) )
+                .thenReturn( springUser );
+        when( jwtService.generateRefreshToken(refreshToken, springUser.getUser().getLogin()) ).thenThrow( AccessDeniedException.class );
+
+        mockMvc.perform( post( API + "/refresh" )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param( "refreshTokenStr", refreshToken) )
+                .andExpect( status().isForbidden() );
+    }
+
+    @Test
+    public void getExpiredRefreshTokenTest() throws Exception {
+        String refreshToken = "ExpiredRefreshToken";
+        RefreshToken newRefreshToken = RefreshTokenBuilder.builder().build();
+
+        SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
+        when( refreshTokenService.getUserByToken(refreshToken) )
+                .thenReturn( springUser );
+        doThrow(TokenExpiredException.class).when( jwtService ).verify(refreshToken);
+
+        mockMvc.perform( post( API + "/refresh" )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param( "refreshTokenStr", refreshToken) )
+                .andExpect( status().isUnauthorized() );
     }
 
     @Test
@@ -154,15 +193,24 @@ public class AuthenticationControllerTest {
                         .param( "refreshToken", refreshToken) )
                 .andExpect( status().isOk() );
 
-        verify( refreshTokenService, times(1) ).delete( refreshToken );
+        verify( jwtService, times(1) ).removeDescendantRefreshTokens( refreshToken );
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken, String login) {
+        when( jwtService.generateRefreshToken(login) ).thenReturn(refreshToken);
+        return mockJwtGenerate(accessToken, refreshToken);
+    }
+
+    private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken, String login, String replacedBy) {
+        when( jwtService.generateRefreshToken(eq(login), anyInt()) ).thenReturn(refreshToken);
+        return mockJwtGenerate(accessToken, refreshToken);
     }
 
     private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken) {
         when( jwtService.generateAccessToken()).thenReturn(accessToken);
-        when( jwtService.generateRefreshToken()).thenReturn(refreshToken);
         when( jwtService.getAccessTokenExpirationInMinutes()).thenReturn( 10 );
-        when( jwtService.getRefreshTokenExpirationInMinutes()).thenReturn(60);
+        when( jwtService.getRefreshTokenExpirationInMinutes()).thenReturn( 60 );
         return new AuthenticationResponse( accessToken, refreshToken, 10, 60);
     }
 

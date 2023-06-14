@@ -16,9 +16,18 @@ public class RefreshToken implements Identity<Long> {
     @Column(nullable = false, unique = true)
     private String token;
 
+    @Column(unique = true)
+    private String replacedByToken;
+
+    @Column
+    private Boolean isActive;
+
     @NotBlank
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String login;
+
+    @Column(nullable = false)
+    private Integer tag;
 
     public Long getId() {
         return id;
@@ -42,6 +51,30 @@ public class RefreshToken implements Identity<Long> {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public String getReplacedByToken() {
+        return replacedByToken;
+    }
+
+    public void setReplacedByToken(String replacedByToken) {
+        this.replacedByToken = replacedByToken;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean active) {
+        isActive = active;
+    }
+
+    public Integer getTag() {
+        return tag;
+    }
+
+    public void setTag(Integer tag) {
+        this.tag = tag;
     }
 
     @Override

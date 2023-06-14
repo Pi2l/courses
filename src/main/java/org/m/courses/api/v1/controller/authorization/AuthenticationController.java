@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.m.courses.security.SpringUser;
 import org.m.courses.security.jwt.JwtService;
 import org.m.courses.service.RefreshTokenService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,21 +44,22 @@ public class AuthenticationController {
                 .authenticate( new UsernamePasswordAuthenticationToken( login, password ) );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return buildAuthenticationResponse( jwtService.generateRefreshToken() );
+        return buildAuthenticationResponse( jwtService.generateRefreshToken(login) );
     }
 
     @PostMapping("/logout")
     @ResponseBody
     public void logout(@RequestParam @NotEmpty String refreshToken) {
-        refreshTokenService.delete(refreshToken);
+        jwtService.removeDescendantRefreshTokens(refreshToken);
         SecurityContextHolder.getContext().setAuthentication( null );
         SecurityContextHolder.clearContext();
     }
 
     @PostMapping("/refresh")
     @ResponseBody
-    public AuthenticationResponse refreshToken(@RequestParam @NotEmpty String refreshToken) {
-        SpringUser springUser = refreshTokenService.getUserByToken( refreshToken );
+    @ResponseStatus(HttpStatus.OK)
+    public AuthenticationResponse refreshToken(@RequestParam @NotEmpty String refreshTokenStr) {//401, 403
+        SpringUser springUser = refreshTokenService.getUserByToken( refreshTokenStr );
 
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -65,15 +67,16 @@ public class AuthenticationController {
                         springUser.getUser().getLogin(),
                         List.of(new SimpleGrantedAuthority("ROLE_" + springUser.getUser().getRole())) );
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        validateRefreshToken(refreshTokenStr);
 
-        validateRefreshToken(refreshToken);
-        return buildAuthenticationResponse( refreshToken );
+        String newRefreshToken = jwtService.generateRefreshToken( refreshTokenStr, springUser.getUser().getLogin() );
+        return buildAuthenticationResponse( newRefreshToken );
     }
 
-    private void validateRefreshToken(String refreshToken){
+    private void validateRefreshToken(String refreshToken) {
         try {
             jwtService.verify(refreshToken);
-        } catch ( TokenExpiredException expiredException ){
+        } catch ( TokenExpiredException expiredException ) {
             refreshTokenService.delete( refreshToken );
             SecurityContextHolder.getContext().setAuthentication( null );
             throw expiredException;

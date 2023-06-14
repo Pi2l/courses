@@ -1,14 +1,11 @@
 package org.m.courses.builder;
 
 import org.m.courses.dao.RefreshTokenDao;
-import org.m.courses.model.Course;
-import org.m.courses.model.Group;
 import org.m.courses.model.RefreshToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
-import java.util.Set;
 
 
 @Component
@@ -49,6 +46,8 @@ public class RefreshTokenBuilder {
         setId( randomValue );
         setToken( "Token_" + randomValue );
         setLogin( "Login_" + randomValue );
+        setReplacedBy(null);
+        setIsActive(true);
         return this;
     }
 
@@ -64,6 +63,16 @@ public class RefreshTokenBuilder {
 
     public RefreshTokenBuilder setLogin(String login) {
         refreshToken.setLogin(login);
+        return this;
+    }
+
+    public RefreshTokenBuilder setReplacedBy(String replacedBy) {
+        refreshToken.setReplacedByToken(replacedBy);
+        return this;
+    }
+
+    public RefreshTokenBuilder setIsActive(boolean isActive) {
+        refreshToken.setIsActive(isActive);
         return this;
     }
 }

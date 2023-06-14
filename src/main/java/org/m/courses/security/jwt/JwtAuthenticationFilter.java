@@ -24,14 +24,14 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private List<AntPathRequestMatcher> exludedPathMatchers;
+    private List<AntPathRequestMatcher> excludedPathMatchers;
     private RequestMatcher authRequiredPathMatcher;
     private JwtService jwtService;
 
     public JwtAuthenticationFilter(String authRequiredPath, String[] excludedPaths, JwtService jwtService) {
         this.authRequiredPathMatcher = new AntPathRequestMatcher( authRequiredPath );
 
-        this.exludedPathMatchers = Stream.of(excludedPaths)
+        this.excludedPathMatchers = Stream.of(excludedPaths)
                 .map(AntPathRequestMatcher::new).collect(Collectors.toList());
         this.jwtService = jwtService;
     }
@@ -76,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean requiresAuthentication(HttpServletRequest request) {
-        if ( exludedPathMatchers.stream().anyMatch(el -> el.matches( request )) ) {
+        if ( excludedPathMatchers.stream().anyMatch(el -> el.matches( request )) ) {
             return false;
         }
         return authRequiredPathMatcher.matches( request );

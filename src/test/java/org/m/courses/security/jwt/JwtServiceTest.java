@@ -6,20 +6,18 @@ import org.junit.jupiter.api.Test;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;
 import org.m.courses.service.RefreshTokenService;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -50,7 +48,7 @@ public class JwtServiceTest extends Autologinable {
         User admin = userBuilder.setRole(Role.ADMIN).toDB();
         AuthManager.loginAs( admin );
 
-        String refreshTokenStr = jwtService.generateRefreshToken();
+        String refreshTokenStr = jwtService.generateRefreshToken( admin.getLogin() );
 
         ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass( RefreshToken.class );
 
@@ -59,5 +57,76 @@ public class JwtServiceTest extends Autologinable {
 
         assertEquals( refreshToken.getToken(), refreshTokenStr );
         assertEquals( refreshToken.getLogin(), admin.getLogin() );
+    }
+
+    @Test
+    void generateMoreThanOneNewRefreshTokenPerUser() {
+        //one user has to have possibility to generate one or more refresh "token family": https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/#Refresh-Token-Automatic-Reuse-Detection
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        AuthManager.loginAs( admin );
+
+        String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshToken( admin.getLogin() );
+
+        RefreshToken refreshToken1 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr1) );
+        RefreshToken refreshToken2 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr2) );
+
+        assertEquals( refreshToken1.getToken(), refreshTokenStr1 );
+        assertEquals( refreshToken2.getToken(), refreshTokenStr2 );
+
+        assertNull( refreshToken1.getReplacedByToken() );
+        assertNull( refreshToken2.getReplacedByToken() );
+
+        assertNotEquals( refreshToken1.getToken(), refreshToken2.getToken() );
+    }
+
+    @Test
+    void generateRefreshTokenThatReplaceItsAncestor() {
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        AuthManager.loginAs( admin );
+
+        String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshToken(refreshTokenStr1, admin.getLogin() );
+        String refreshTokenStr3 = jwtService.generateRefreshToken(refreshTokenStr2, admin.getLogin() );
+
+        RefreshToken refreshToken1 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr1) );
+        RefreshToken refreshToken2 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr2) );
+        RefreshToken refreshToken3 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr3) );
+
+        assertNull(refreshToken3.getReplacedByToken());
+        assertEquals(refreshToken2.getReplacedByToken(), refreshToken3.getToken());
+        assertEquals(refreshToken1.getReplacedByToken(), refreshToken2.getToken());
+
+        assertFalse( refreshToken1.getIsActive() );
+        assertFalse( refreshToken2.getIsActive() );
+        assertTrue( refreshToken3.getIsActive() );
+    }
+
+    @Test
+    void generateRefreshTokenThatIsNotAlreadyActive() {
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        AuthManager.loginAs( admin );
+        String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshToken(refreshTokenStr1, admin.getLogin() );
+        String refreshTokenStr3 = jwtService.generateRefreshToken(refreshTokenStr2, admin.getLogin() );
+        String refreshTokenStr4 = jwtService.generateRefreshToken(refreshTokenStr3, admin.getLogin() );
+
+        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshToken(refreshTokenStr3, admin.getLogin()) );
+        AuthManager.loginAs( admin );
+        assertThrowsExactly(AccessDeniedException.class, () -> jwtService.generateRefreshToken(refreshTokenStr4, admin.getLogin()) );
+
+        RefreshToken refreshToken1 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr1) );
+        RefreshToken refreshToken2 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr2) );
+        RefreshToken refreshToken3 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr3) );
+        RefreshToken refreshToken4 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr4) );
+
+        assertFalse( refreshToken1.getIsActive() );
+        assertFalse( refreshToken2.getIsActive() );
+        assertFalse( refreshToken3.getIsActive() );
+        assertFalse( refreshToken4.getIsActive() );
+    }
+
+    private Specification<RefreshToken> whereTokenEqualsTo(String refreshTokenStr) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("token"), refreshTokenStr);
     }
 }

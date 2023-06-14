@@ -134,12 +134,4 @@ public class JwtFilterTest {
         verify( jwtService, times(1) ).verify( refreshToken );
 
     }
-
-    private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken) {
-        when( jwtService.generateAccessToken()).thenReturn(accessToken);
-        when( jwtService.generateRefreshToken()).thenReturn(refreshToken);
-        when( jwtService.getAccessTokenExpirationInMinutes()).thenReturn( 10 );
-        when( jwtService.getRefreshTokenExpirationInMinutes()).thenReturn(60);
-        return new AuthenticationResponse( accessToken, refreshToken, 10, 60);
-    }
 }
