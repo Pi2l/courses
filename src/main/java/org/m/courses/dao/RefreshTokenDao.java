@@ -27,7 +27,7 @@ public class RefreshTokenDao extends AbstractDao<RefreshToken> {
     }
 
     @Override
-    protected boolean canModify(Long id) {
+    public boolean canModify(Long id) {
         RefreshToken refreshToken = get( id );
         if (refreshToken == null) {
             return isAdmin();

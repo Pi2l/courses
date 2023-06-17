@@ -3,7 +3,8 @@ package org.m.courses.security.jwt;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.junit.jupiter.api.Test;
-import org.m.courses.api.v1.common.ResultCaptor;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
@@ -17,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -128,5 +131,21 @@ public class JwtServiceTest extends Autologinable {
 
     private Specification<RefreshToken> whereTokenEqualsTo(String refreshTokenStr) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("token"), refreshTokenStr);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    void removeDescendantRefreshTokensTest(int i) {
+        User admin = userBuilder.setRole(Role.ADMIN).toDB();
+        AuthManager.loginAs( admin );
+        String refreshTokenStr1 = jwtService.generateRefreshToken( admin.getLogin() );
+        String refreshTokenStr2 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr1, admin.getLogin() );
+        String refreshTokenStr3 = jwtService.generateRefreshTokenSuccessor(refreshTokenStr2, admin.getLogin() );
+        String [] refreshTokenStrs = { refreshTokenStr1, refreshTokenStr2, refreshTokenStr3 };
+
+        jwtService.removeDescendantRefreshTokens( refreshTokenStrs[i] ); // any of refreshTokenStr
+
+        Arrays.stream(refreshTokenStrs)
+                .forEach(refreshToken -> assertNull( refreshTokenService.get( whereTokenEqualsTo(refreshToken) ) ) );
     }
 }

@@ -2,9 +2,12 @@ package org.m.courses.service;
 
 import org.m.courses.dao.AbstractDao;
 import org.m.courses.dao.RefreshTokenDao;
+import org.m.courses.exception.AccessDeniedException;
 import org.m.courses.exception.TokenNotFoundException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.security.SpringUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +36,16 @@ public class RefreshTokenService extends AbstractService<RefreshToken> {
     }
 
     public void delete(Specification<RefreshToken> specification) {
-        RefreshToken token = get( specification );
-        if (token == null) {
+        Page<RefreshToken> tokenPage = getAll(Pageable.unpaged(), specification );
+        if (tokenPage.getSize() == 0) {
             return;
         }
-        delete( token.getId() );
+        tokenPage.forEach( token -> {
+            if ( !tokenDao.canModify(token.getId()) ) {
+                throw new AccessDeniedException();
+            }
+        });
+        tokenPage.forEach( token -> delete(token.getId()) );
     }
 
     public SpringUser getUserByToken(String refreshTokenStr) {

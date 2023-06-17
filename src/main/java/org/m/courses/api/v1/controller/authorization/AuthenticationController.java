@@ -59,7 +59,7 @@ public class AuthenticationController {
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     public AuthenticationResponse refreshToken(@RequestParam @NotEmpty String refreshTokenStr) {//401, 403
-        SpringUser springUser = refreshTokenService.getUserByToken( refreshTokenStr );
+        SpringUser springUser = refreshTokenService.getUserByToken( refreshTokenStr );// nullPointer when user changed its login and tries to refresh token with old login
 
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -77,7 +77,7 @@ public class AuthenticationController {
         try {
             jwtService.verify(refreshToken);
         } catch ( TokenExpiredException expiredException ) {
-            refreshTokenService.delete( refreshToken );
+            jwtService.removeDescendantRefreshTokens(refreshToken);
             SecurityContextHolder.getContext().setAuthentication( null );
             throw expiredException;
         }

@@ -169,7 +169,6 @@ public class AuthenticationControllerTest {
     @Test
     public void getExpiredRefreshTokenTest() throws Exception {
         String refreshToken = "ExpiredRefreshToken";
-        RefreshToken newRefreshToken = RefreshTokenBuilder.builder().build();
 
         SpringUser springUser = new SpringUser( UserBuilder.builder().build() );
         when( refreshTokenService.getUserByToken(refreshToken) )
@@ -180,6 +179,9 @@ public class AuthenticationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param( "refreshTokenStr", refreshToken) )
                 .andExpect( status().isUnauthorized() );
+
+        verify( jwtService, times(1) ).removeDescendantRefreshTokens( anyString() );
+        verify( jwtService, never() ).generateRefreshTokenSuccessor(refreshToken, springUser.getUser().getLogin());
     }
 
     @Test
