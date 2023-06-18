@@ -16,6 +16,7 @@ import org.m.courses.security.jwt.JwtService;
 import org.m.courses.service.RefreshTokenService;
 import org.m.courses.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -27,6 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import javax.servlet.http.Cookie;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.m.courses.api.v1.controller.common.ApiPath.API;
@@ -41,6 +44,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AuthenticationControllerTest {
 
     protected MockMvc mockMvc;
+
+    @Value("${org.m.cookie.refreshJwtAgeInSeconds}")
+    private int MAX_COOKIE_AGE = 604800;
 
     @Autowired
     private ObjectMapper mapper;
@@ -82,11 +88,16 @@ public class AuthenticationControllerTest {
     public void loginTest() throws Exception {
         Authentication authentication = new UsernamePasswordAuthenticationToken("login1", "password1");
         when( authenticationManager.authenticate( any() ) ).thenReturn( authentication );
+        String refreshToken = "refreshToken";
+        when( jwtService.generateRefreshToken("login1") ).thenReturn(refreshToken);
 
         mockMvc.perform( post( API + "/login" )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content( "{\"login\": \"login1\", \"password\": \"password1\"}" ) )
-                .andExpect( status().isOk() );
+                .andExpect( cookie().value("refreshToken", refreshToken ) )
+                .andExpect( cookie().httpOnly("refreshToken", true ) )
+                .andExpect( cookie().maxAge("refreshToken", MAX_COOKIE_AGE ) )
+                .andExpect( status().isOk());
 
         verify( authenticationManager, times(1) ).authenticate( authentication );
         verify( jwtService, times(1) ).generateAccessToken();
@@ -109,6 +120,9 @@ public class AuthenticationControllerTest {
                         .content( "{\"login\": \"login1\", \"password\": \"password1\"}" ) )
                 .andDo(print())
                 .andExpect( content().json( getJson(response) ) )
+                .andExpect( cookie().value("refreshToken", refreshToken ) )
+                .andExpect( cookie().httpOnly("refreshToken", true ) )
+                .andExpect( cookie().maxAge("refreshToken", MAX_COOKIE_AGE ) )
                 .andExpect( status().isOk() );
 
         verify( authenticationManager, times(1) ).authenticate( any() );
@@ -121,9 +135,10 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshTokenStr", refreshToken) )
+                        .cookie( new Cookie("refreshToken", refreshToken)) )
                 .andDo( print() )
                 .andExpect( jsonPath("$.cause").value( "refresh token not found with " + refreshToken ) )
+                .andExpect( cookie().doesNotExist("refreshToken" ) )
                 .andExpect( status().isBadRequest() );
 
         verify( authenticationManager, never() ).authenticate( any() );
@@ -146,8 +161,11 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshTokenStr", refreshToken) )
+                        .cookie( new Cookie("refreshToken", refreshToken)) )
                 .andExpect( content().json( getJson(response) ) )
+                .andExpect( cookie().value("refreshToken", newRefreshToken.getToken() ) )
+                .andExpect( cookie().httpOnly("refreshToken", true ) )
+                .andExpect( cookie().maxAge("refreshToken", MAX_COOKIE_AGE ) )
                 .andExpect( status().isOk() );
     }
 
@@ -162,7 +180,8 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshTokenStr", refreshToken) )
+                        .cookie( new Cookie("refreshToken", refreshToken)) )
+                .andExpect( cookie().doesNotExist("refreshToken") )
                 .andExpect( status().isForbidden() );
     }
 
@@ -177,7 +196,8 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/refresh" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshTokenStr", refreshToken) )
+                        .cookie( new Cookie("refreshToken", refreshToken)) )
+                .andExpect( cookie().doesNotExist("refreshToken") )
                 .andExpect( status().isUnauthorized() );
 
         verify( jwtService, times(1) ).removeDescendantRefreshTokens( anyString() );
@@ -192,7 +212,10 @@ public class AuthenticationControllerTest {
 
         mockMvc.perform( post( API + "/logout" )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param( "refreshToken", refreshToken) )
+                        .cookie( new Cookie("refreshToken", refreshToken)) )
+                .andExpect( cookie().value("refreshToken", (String) null ) )
+                .andExpect( cookie().httpOnly("refreshToken", true ) )
+                .andExpect( cookie().maxAge("refreshToken", 0 ) )
                 .andExpect( status().isOk() );
 
         verify( jwtService, times(1) ).removeDescendantRefreshTokens( refreshToken );
@@ -213,7 +236,7 @@ public class AuthenticationControllerTest {
         when( jwtService.generateAccessToken()).thenReturn(accessToken);
         when( jwtService.getAccessTokenExpirationInMinutes()).thenReturn( 10 );
         when( jwtService.getRefreshTokenExpirationInMinutes()).thenReturn( 60 );
-        return new AuthenticationResponse( accessToken, refreshToken, 10, 60);
+        return new AuthenticationResponse( accessToken, 10, 60);
     }
 
 }

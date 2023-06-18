@@ -11,6 +11,7 @@ import org.m.courses.security.UserDetailsServiceImpl;
 import org.m.courses.service.RefreshTokenService;
 import org.m.courses.service.UserAuthorizationService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -109,7 +110,7 @@ public class JwtService {
 
     public UserDetails getUserDetailsByJwt( String jwtKey ) {
         String login = getLogin( jwtKey );
-        if ( refreshTokenService.get( buildEqualSpec("login", login) ) == null) {
+        if ( refreshTokenService.getAll(Pageable.unpaged(), buildEqualSpec("login", login) ).getSize() == 0) {
             login = null; // in order userDetailsService.loadUserByUsername throw UsernameNotFoundException
         }
         return userDetailsService.loadUserByUsername( login );
