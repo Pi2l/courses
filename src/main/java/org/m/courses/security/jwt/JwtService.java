@@ -130,14 +130,18 @@ public class JwtService {
     }
 
     public String generateRefreshTokenSuccessor(String refreshTokenStr, String login) {
-        RefreshToken notActiveRefreshToken = refreshTokenService.get( getNotActiveTokenSpec(refreshTokenStr) );
-        if (notActiveRefreshToken != null) {
-            revokeDescendantRefreshTokens( notActiveRefreshToken );
-            SecurityContextHolder.getContext().setAuthentication( null );
+        RefreshToken refreshToken = refreshTokenService.get( getTokenSpec(refreshTokenStr) );
+        if ( refreshToken == null ) {
             throw new AccessDeniedException();
         }
 
-        RefreshToken refreshToken = refreshTokenService.get( getTokenSpec(refreshTokenStr) );
+        if ( !refreshToken.getIsActive() ) {
+            revokeDescendantRefreshTokens(refreshToken);
+            removeDescendantRefreshTokens(refreshTokenStr);
+            SecurityContextHolder.getContext().setAuthentication(null);
+            throw new AccessDeniedException();
+        }
+
         return rotateRefreshToken(refreshToken, login);
     }
 
@@ -172,13 +176,6 @@ public class JwtService {
 
     private Predicate getTokenPredicate(Root<RefreshToken> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, String refreshToken) {
         return criteriaBuilder.equal( root.get("token"), refreshToken );
-    }
-
-    private Specification<RefreshToken> getNotActiveTokenSpec(String refreshToken) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.and(
-                criteriaBuilder.isFalse(root.get("isActive")),
-//                criteriaBuilder.isNotNull(root.get("replacedByToken")),// ???????
-                getTokenPredicate(root, query, criteriaBuilder, refreshToken));
     }
 
     public void removeDescendantRefreshTokens(String refreshTokenStr) {

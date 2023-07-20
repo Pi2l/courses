@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 public class JwtServiceTest extends Autologinable {
 
-    @Autowired
+    @SpyBean
     private JwtService jwtService;
 
     @Autowired
@@ -123,10 +123,11 @@ public class JwtServiceTest extends Autologinable {
         RefreshToken refreshToken3 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr3) );
         RefreshToken refreshToken4 = refreshTokenService.get( whereTokenEqualsTo(refreshTokenStr4) );
 
-        assertFalse( refreshToken1.getIsActive() );
-        assertFalse( refreshToken2.getIsActive() );
-        assertFalse( refreshToken3.getIsActive() );
-        assertFalse( refreshToken4.getIsActive() );
+        assertNull( refreshToken1 );
+        assertNull( refreshToken2 );
+        assertNull( refreshToken3 );
+        assertNull( refreshToken4 );
+        verify( jwtService, times(1)).removeDescendantRefreshTokens( anyString() );
     }
 
     private Specification<RefreshToken> whereTokenEqualsTo(String refreshTokenStr) {
