@@ -110,8 +110,8 @@ public class AuthenticationController {
 
         return new AuthenticationResponse(
                 jwtService.generateAccessToken(),
-                jwtService.getAccessTokenExpirationInMinutes(),
-                jwtService.getRefreshTokenExpirationInMinutes() );
+                jwtService.getAccessTokenExpirationInSeconds(),
+                jwtService.getRefreshTokenExpirationInSeconds() );
     }
 
     private void setRefreshTokenCookie(String refreshToken, int cookieAge, HttpServletResponse response) {

@@ -33,11 +33,11 @@ public class JwtService {
     @Value("${org.m.jwt.jwtKey}")
     private String jwtKey;
 
-    @Value("${org.m.jwt.accessTokenExpirationInMinutes}")
-    private Integer accessTokenExpirationInMinutes;
+    @Value("${org.m.jwt.accessTokenExpirationInSeconds}")
+    private Integer accessTokenExpirationInSeconds;
 
-    @Value("${org.m.jwt.refreshTokenExpirationInMinutes}")
-    private Integer refreshTokenExpirationInMinutes;
+    @Value("${org.m.jwt.refreshTokenExpirationInSeconds}")
+    private Integer refreshTokenExpirationInSeconds;
 
     private Algorithm algorithm;
     private final RefreshTokenService refreshTokenService;
@@ -57,7 +57,7 @@ public class JwtService {
 
     public String generateAccessToken() {
         return generateToken( userAuthorizationService.getCurrentUser().getLogin(),
-                getExpirationDate( accessTokenExpirationInMinutes ) );
+                getExpirationDate(accessTokenExpirationInSeconds) );
     }
 
     public String generateRefreshToken(String login) {
@@ -69,7 +69,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(String login, int tag) {
-        Date expirationDate = getExpirationDate( refreshTokenExpirationInMinutes );
+        Date expirationDate = getExpirationDate(refreshTokenExpirationInSeconds);
         String refreshTokenStr;
         do {
             refreshTokenStr = generateToken(UUID.randomUUID().toString(), expirationDate);
@@ -99,8 +99,8 @@ public class JwtService {
         return new Date( System.currentTimeMillis() );
     }
 
-    private Date getExpirationDate( int expirationInMinutes ) {
-        return new Date( System.currentTimeMillis() + expirationInMinutes * 1000L * 60 );
+    private Date getExpirationDate( int expirationInSeconds ) {
+        return new Date( System.currentTimeMillis() + expirationInSeconds * 1000L );
     }
 
     public void verify( String jwt ) {
@@ -121,12 +121,12 @@ public class JwtService {
         return decodedJWT.getSubject();
     }
 
-    public Integer getAccessTokenExpirationInMinutes() {
-        return accessTokenExpirationInMinutes;
+    public Integer getAccessTokenExpirationInSeconds() {
+        return accessTokenExpirationInSeconds;
     }
 
-    public Integer getRefreshTokenExpirationInMinutes() {
-        return refreshTokenExpirationInMinutes;
+    public Integer getRefreshTokenExpirationInSeconds() {
+        return refreshTokenExpirationInSeconds;
     }
 
     public String generateRefreshTokenSuccessor(String refreshTokenStr, String login) {

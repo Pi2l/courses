@@ -9,6 +9,7 @@ import org.m.courses.auth.AuthManager;
 import org.m.courses.builder.UserBuilder;
 import org.m.courses.dao.Autologinable;
 import org.m.courses.exception.AccessDeniedException;
+import org.m.courses.exception.TokenNotFoundException;
 import org.m.courses.model.RefreshToken;
 import org.m.courses.model.Role;
 import org.m.courses.model.User;

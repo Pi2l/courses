@@ -102,8 +102,8 @@ public class AuthenticationControllerTest {
         verify( authenticationManager, times(1) ).authenticate( authentication );
         verify( jwtService, times(1) ).generateAccessToken();
         verify( jwtService, times(1) ).generateRefreshToken("login1");
-        verify( jwtService, times(1) ).getAccessTokenExpirationInMinutes();
-        verify( jwtService, times(1) ).getRefreshTokenExpirationInMinutes();
+        verify( jwtService, times(1) ).getAccessTokenExpirationInSeconds();
+        verify( jwtService, times(1) ).getRefreshTokenExpirationInSeconds();
     }
 
     @Test
@@ -234,8 +234,8 @@ public class AuthenticationControllerTest {
 
     private AuthenticationResponse mockJwtGenerate(String accessToken, String refreshToken) {
         when( jwtService.generateAccessToken()).thenReturn(accessToken);
-        when( jwtService.getAccessTokenExpirationInMinutes()).thenReturn( 10 );
-        when( jwtService.getRefreshTokenExpirationInMinutes()).thenReturn( 60 );
+        when( jwtService.getAccessTokenExpirationInSeconds()).thenReturn( 10 );
+        when( jwtService.getRefreshTokenExpirationInSeconds()).thenReturn( 60 );
         return new AuthenticationResponse( accessToken, 10, 60);
     }
 
