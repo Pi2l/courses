@@ -85,7 +85,8 @@ public class SecurityConfiguration {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:4200/")
                         .allowedMethods("*")
-                        .allowedHeaders("*");;
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }
