@@ -38,8 +38,17 @@ public class CoursesApplication {
 			admin.setPassword("admin");
 			admin.setRole(Role.ADMIN);
 
+			User user = new User();
+			user.setFirstName("User_firstName");
+			user.setLastName("User_lastName");
+			user.setPhoneNumber("User_398477937");
+			user.setLogin("user");
+			user.setPassword("user");
+			user.setRole(Role.USER);
+
 			loginAs( admin );
 			userService.create( admin );
+			userService.create( user );
 			logout();
 		});
 	}
